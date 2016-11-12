@@ -335,10 +335,10 @@ class rent_object_holder
 			echo '<p>Webaddress till aktuell information om anläggningen.</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
-			// beads
+			// beds
 			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="beads">Sovplatser</label>' . PHP_EOL;
-			printf('<input type="text" aria-required="true" value="%s" id="beads" name="beads">' . PHP_EOL, htmlentities($rent_object['beads']));
+			echo '<label for="beds">Sovplatser</label>' . PHP_EOL;
+			printf('<input type="text" aria-required="true" value="%s" id="beds" name="beds">' . PHP_EOL, htmlentities($rent_object['beds']));
 			echo '<p>Antal sovplatser på anläggningen.</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
@@ -618,7 +618,7 @@ SQL_BLOCK;
 		}
 
 		$items = array();
-		foreach($wpdb->get_results("SELECT rent_object_id, rent_organisation_id, rent_object_type_id, name, beads, position_latitude, position_longitude, city, object_updated, type_name, CONCAT(types.url, rent_object_id) AS url FROM {$wpdb->prefix}rent_object LEFT JOIN {$wpdb->prefix}rent_object_types AS types USING (rent_object_type_id) WHERE object_status = 1", 'ARRAY_A') as $row)
+		foreach($wpdb->get_results("SELECT rent_object_id, rent_organisation_id, rent_object_type_id, name, beds, position_latitude, position_longitude, city, object_updated, type_name, CONCAT(types.url, rent_object_id) AS url FROM {$wpdb->prefix}rent_object LEFT JOIN {$wpdb->prefix}rent_object_types AS types USING (rent_object_type_id) WHERE object_status = 1", 'ARRAY_A') as $row)
 		{
 			$items[$row['rent_object_id']] = $row;
 		}
@@ -981,9 +981,9 @@ SQL_BLOCK;
 		$html[] = '<h3 class="rent_object_data">Kort Fakta</h3>';
 		$html[] = '<dl class="rent_object_data">';
 		$html[] = '<dt>Organistation:</dt>	<dd>' . htmlentities($rent_object->organisation_name) . '</dd>';
-		if($rent_object->beads)
+		if($rent_object->beds)
 		{
-			$html[] = '<dt>Sovplatser:</dt>	<dd>' . htmlentities($rent_object->beads) . 'st</dd>';
+			$html[] = '<dt>Sovplatser:</dt>	<dd>' . htmlentities($rent_object->beds) . 'st</dd>';
 		}
 
 		$settings = $this->object_settings($rent_object->rent_object_id, TRUE);
@@ -1365,7 +1365,7 @@ $GLOBALS['debug_query'] = $query;
 
 // 			"ingress"=> "Kragen\u00e4s - m\u00f6jligheternas m\u00f6tesplats\r\n",
 // 			"description"=> "Med det vidstr\u00e4ckta havet i v\u00e4ster, inomsk\u00e4rs milsl\u00e5nga kanotleder i norr, utbredda hajkomr\u00e5den i \u00f6ster och hela Tanums kommuns kulturarv i s\u00f6der bjuder Kragen\u00e4s in till \u00e4ventyr och minnen f\u00f6r livet. Vackert bel\u00e4get vid Tanums naturreservat 14 mil fr\u00e5n G\u00f6teborg d\u00e4r land m\u00f6ter hav tar Kragen\u00e4s tillvara p\u00e5 terr\u00e4ngens variation och erbjuder o\u00e4ndliga m\u00f6jligheter f\u00f6r l\u00e4ger med programaktiviteter ut\u00f6ver det vanliga. Genom skog och berg g\u00e5r l\u00e5nga vandringsleder och vid vattnet guppar bryggorna av kluckande v\u00e5gor. Med sina m\u00e5nga l\u00e4ger\u00e4ngar, roliga aktiviteter och inspirerande programutbud finns det plats f\u00f6r h\u00e4rliga upplevelser och \u00e4ventyr ut\u00f6ver det vanliga. V\u00e4lkommen till Kragen\u00e4s \u2013  m\u00f6jligheternas m\u00f6tesplats!",
-// 			"beads"=> "0",
+// 			"beds"=> "0",
 // 			"post_adress"=> "",
 // 			"city"=> "",
 // 			"price_description"=> "40 kr*\/person\/natt exklusive mat\r\n125 kr*\/person\/natt inklusive mat, servicefunktioner och programutbud (ej kanoter, kajaker och hantverksmaterial)\r\n\r\n* Scouter tillh\u00f6rande G\u00f6teborgs scoutdistrikt erh\u00e5ller 15 kr rabatt\/person\/natt.\r\n\r\nSenaste priser p\u00e5=>\r\nhttp=>\/\/kragenas.scout.se\/boka\/prislista\/",

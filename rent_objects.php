@@ -22,6 +22,9 @@ add_action("wp", array("rent_object_holder", "init_wp"));
 add_action('admin_post_nopriv_add_rent_object', array("rent_object_holder", 'add_new_user') );
 add_action('admin_post_add_rent_object', array("rent_object_holder", 'add_new_user') );
 
+// save the relative path, as __FILE__ only gives the absolte path
+rent_object_holder::$filename = $plugin;
+
 // make sure we can send redirect-headers
 if(ob_get_level() < 1)
 {
@@ -31,6 +34,7 @@ if(ob_get_level() < 1)
 class rent_object_holder
 {
 	public $admin_user = FALSE;
+	static $filename;
 
 	static function init_admin()
 	{
@@ -520,6 +524,20 @@ SQL_BLOCK;
 			$attributes['id'] = $m['id'];
 		}
 
+		if($attributes['filter'] AND is_string($attributes['filter']))
+		{
+			$attributes['filter'] = html_entity_decode($attributes['filter']);
+			$filter = json_decode($attributes['filter']);
+			if(!$filter)
+			{
+				$filter = json_decode(preg_replace("#([{,]\s*)([a-z][a-z0-9]*):#i", "\$1\"\$2\":", $attributes['filter']));
+			}
+			if($filter)
+			{
+				$attributes['filter'] = $filter;
+			}
+		}
+
 		switch($attributes['mode'])
 		{
 			case 'title':
@@ -558,7 +576,7 @@ SQL_BLOCK;
 				}
 				else
 				{
-					return $this->add_json_items() . $this->display_map();
+					return $this->add_json_items($attributes['filter']) . $this->display_map();
 				}
 			}
 
@@ -570,7 +588,7 @@ SQL_BLOCK;
 				}
 				else
 				{
-					return $this->add_json_items() . $this->display_list();
+					return $this->add_json_items($attributes['filter']) . $this->display_list();
 				}
 			}
 
@@ -582,7 +600,7 @@ SQL_BLOCK;
 				}
 				else
 				{
-					return $this->add_json_items() . $this->display_filters();
+					return $this->add_json_items($attributes['filter']) . $this->display_filters();
 				}
 			}
 
@@ -595,7 +613,7 @@ SQL_BLOCK;
 		return "";
 	}
 
-	function add_json_items()
+	function add_json_items($filter = array())
 	{
 		global $wpdb;
 		static $added = FALSE;
@@ -641,11 +659,16 @@ SQL_BLOCK;
 				'objects' => array_values($items),
 				'organisations' => $organisations,
 				'object_types' => $types,
+				'filters' => $filter,
 			), JSON_NUMERIC_CHECK + JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES + JSON_UNESCAPED_UNICODE);
+
+		$x_img = plugins_url(basename(dirname(rent_object_holder::$filename)) . '/x.png');
+		$x_img_json = json_encode($x_img);
 
 		return <<<HTML_BLOCK
 <script type="text/javascript">
 	window.rent_objects = {$rent_objects_json};
+
 	window.rent_objects.fetch_item_by_id = function(list, id_field, id_value, select_field)
 	{
 		var l = list.length;
@@ -664,6 +687,7 @@ SQL_BLOCK;
 			}
 		}
 	};
+
 	window.rent_objects.filter = function()
 	{
 		var objects = window.rent_objects.objects;
@@ -692,7 +716,6 @@ SQL_BLOCK;
 							if(object.rent_object_type_id != filter.value)
 							{
 								ok = false;
-								break;
 							}
 						}
 						else
@@ -700,19 +723,77 @@ SQL_BLOCK;
 							if(object.rent_object_type_id == -filter.value)
 							{
 								ok = false;
-								break;
 							}
 						}
+						break;
 					}
 					case 'name':
 					{
-						// TODO
+						if(!window.rent_objects.filter_text(object.name, filter.value, filter.method))
+						{
+							ok = false;
+						}
+						break;
 					}
 					case 'organisation':
 					{
-						// TODO
+						if(!window.rent_objects.organisations[object.rent_organisation_id])
+						{
+							ok = false;
+						}
+						else if(!window.rent_objects.filter_text(window.rent_objects.organisations[object.rent_organisation_id].name, filter.value, filter.method))
+						{
+							ok = false;
+						}
+						break;
+					}
+					case 'beds':
+					{
+						switch(filter.method)
+						{
+							case 'equal':
+							{
+								if(object.beds != filter.value)
+								{
+									ok = false;
+								}
+								break;
+							}
+
+							case 'more':
+							{
+								if(object.beds < filter.value)
+								{
+									ok = false;
+								}
+								break;
+							}
+
+							case 'less':
+							{
+								if(object.beds > filter.value)
+								{
+									ok = false;
+								}
+								break;
+							}
+
+							case 'not':
+							{
+								if(object.beds == filter.value)
+								{
+									ok = false;
+								}
+								break;
+							}
+						}
+						break;
 					}
 					case 'distance':
+					{
+						// TODO
+					}
+					case 'price':
 					{
 						// TODO
 					}
@@ -727,9 +808,45 @@ SQL_BLOCK;
 		// TODO sort
 
 		window.rent_objects.active_objects = active_objects;
+		window.rent_objects.render_filters();
 		window.rent_objects.update_list();
 		window.rent_objects.update_map();
 	};
+
+	window.rent_objects.filter_text = function(haysatack, needle, method)
+	{
+		var reverse = (needle.substr(0, 1) == '!');
+		if(reverse)
+		{
+			needle = needle.substr(1);
+		}
+
+		switch(method)
+		{
+			case 'begins':
+			{
+				return (haysatack.substr(0, needle.length) == needle);
+			}
+
+			case 'ends':
+			{
+				return (haysatack.substr(haysatack.length - needle.length) == needle);
+			}
+
+			case 'regexp':
+			{
+				return (new RegExp(needle)).test(haysatack);
+			}
+
+			case 'contains':
+			case '':
+			default:
+			{
+				return (haysatack.indexOf(needle) >= 0);
+			}
+		}
+	}
+
 	window.rent_objects.update_list = function()
 	{
 		var objects = window.rent_objects.active_objects;
@@ -810,6 +927,324 @@ SQL_BLOCK;
 		// TODO
 		// ...
 	};
+	window.rent_objects.render_filters = function()
+	{
+		var elements = document.getElementsByClassName('rent_object_filters');
+		var element_count = elements.length;
+		var filters = window.rent_objects.filters;
+		var filter_count = filters.length;
+		if(!filter_count) return false;
+		for(var f_index = 0; f_index < filter_count; f_index++)
+		{
+			var filter = filters[f_index];
+
+			// TODO: get better texts
+			var li_text = JSON.stringify(filter);
+			if(filter.text)
+			{
+				li_text = filter.text;
+			}
+			else
+			{
+				switch(filter.type)
+				{
+					case 'type':
+					{
+						var object_types = window.rent_objects.object_types
+						var object_types_count = object_types.length;
+						for(var ot_index = 0; ot_index < object_types_count; ot_index++)
+						{
+							var object_type = object_types[ot_index];
+							if(filter.value > 0)
+							{
+								if(object_type.id == filter.value)
+								{
+									li_text = object_type.name;
+									break;
+								}
+							}
+							else
+							{
+								if(object_type.id == -filter.value)
+								{
+									li_text = 'Ingen ' + object_type.name;
+									break;
+								}
+							}
+						}
+
+						break;
+					}
+
+					case 'name':
+					{
+						switch(filter.method)
+						{
+							case 'begins':
+							{
+								li_text = 'Namn börjar med "' + filter.value + '"';
+								break;
+							}
+
+							case 'ends':
+							{
+								li_text = 'Namn slutar med "' + filter.value + '"';
+								break;
+							}
+
+							case 'regexp':
+							{
+								li_text = 'Namn matchar /' + filter.value + '/';
+								break;
+							}
+
+							case 'contains':
+							case '':
+							default:
+							{
+								li_text = 'Namn innehåller "' + filter.value + '"';
+								break;
+							}
+						}
+						break;
+					}
+
+					case 'organisation':
+					{
+						switch(filter.method)
+						{
+							case 'begins':
+							{
+								li_text = 'Organisation börjar med "' + filter.value + '"';
+								break;
+							}
+
+							case 'ends':
+							{
+								li_text = 'Organisation slutar med "' + filter.value + '"';
+								break;
+							}
+
+							case 'regexp':
+							{
+								li_text = 'Organisation matchar /' + filter.value + '/';
+								break;
+							}
+
+							case 'contains':
+							case '':
+							default:
+							{
+								li_text = 'Organisation innehåller "' + filter.value + '"';
+								break;
+							}
+						}
+						break;
+					}
+
+					case 'beds':
+					{
+						switch(filter.method)
+						{
+							case 'equal':
+							{
+								switch(filter.value)
+								{
+									case 0:
+									{
+										li_text = 'Inga sovplatser';
+										break;
+									}
+									case 1:
+									{
+										li_text = 'En sovplats';
+										break;
+									}
+									default:
+									{
+										li_text = filter.value + ' sovplatser';
+										break;
+									}
+								}
+								break;
+							}
+
+							case 'more':
+							{
+								switch(filter.value)
+								{
+									case 0:
+									{
+										li_text = 'Har ett värde för sovplatser';
+										break;
+									}
+									case 1:
+									{
+										li_text = 'Har sovplatser';
+										break;
+									}
+									default:
+									{
+										li_text = 'Har minst ' + filter.value + ' sovplatser';
+										break;
+									}
+								}
+								break;
+							}
+
+							case 'less':
+							{
+								switch(filter.value)
+								{
+									case 0:
+									{
+										li_text = 'Inga sovplatser';
+										break;
+									}
+									case 1:
+									{
+										li_text = 'Har max en sovplats';
+										break;
+									}
+									default:
+									{
+										li_text = 'Har inte fler än ' + filter.value + ' sovplatser';
+										break;
+									}
+								}
+								break;
+							}
+
+							case 'not':
+							{
+								switch(filter.value)
+								{
+									case 0:
+									{
+										li_text = 'Har sovplatser';
+										break;
+									}
+									case 1:
+									{
+										li_text = 'Har inte bara en sovplats';
+										break;
+									}
+									default:
+									{
+										li_text = 'Har inte ' + filter.value + ' sovplatser';
+										break;
+									}
+								}
+								break;
+							}
+
+						}
+					}
+					case 'option':
+					{
+						// TODO
+					}
+					case 'distance':
+					{
+						// TODO
+					}
+					case 'price':
+					{
+						// TODO
+					}
+				}
+			}
+
+			if(element_count)
+			{
+				if(!filter.display_text)
+				{
+					filter.display_text = '';
+				}
+
+				if(filter.elements && filter.display_text == li_text)
+				{
+					continue;
+				}
+
+				if(filter.elements)
+				{
+					var fe_count = filter.elements.length;
+					for(var e_index = 0; e_index < fe_count; e_index++)
+					{
+						var element = filter.elements[e_index];
+						element.firstChild.innerText = li_text;
+					}
+				}
+				else
+				{
+					filter.elements = [];
+					for(var e_index = 0; e_index < element_count; e_index++)
+					{
+						var element = elements[e_index];
+
+						var li = document.createElement('li');
+						var span = document.createElement('span');
+						span.innerText = li_text;
+						li.appendChild(span);
+						var img = document.createElement('img');
+						img.className = 'filter_delete';
+						img.alt = '[X]';
+						img.src = {$x_img_json};
+						img.filter = filter;
+
+						// W3C
+						if(window.addEventListener) img.addEventListener('click', function () {window.rent_objects.remove_filter(img.filter);}, false);
+						// IE
+						else img.attachEvent('click', function () {window.rent_objects.remove_filter(img.filter);});
+
+						li.appendChild(img);
+						element.appendChild(li);
+						filter.elements.push(li);
+					}
+				}
+				filter.display_text == li_text
+			}
+		}
+	};
+	window.rent_objects.remove_filter = function(filter)
+	{
+		var filters = window.rent_objects.filters;
+		var filter_count = filters.length;
+		if(!filter_count) return false;
+		for(var f_index = 0; f_index < filter_count; f_index++)
+		{
+			var current_filter = filters[f_index];
+
+			if(current_filter == filter)
+			{
+				if(filter.elements)
+				{
+					var fe_count = filter.elements.length;
+					for(var e_index = fe_count - 1; e_index >= 0; e_index--)
+					{
+						var element = filter.elements[e_index];
+						element.remove();
+					}
+					filter.elements = [];
+				}
+
+				filter_count--;
+				if(f_index < filter_count)
+				{
+					filters[f_index] = filters[filter_count];
+				}
+				filters.length--;
+				break;
+			}
+		}
+	}
+	window.rent_objects.add_filter = function()
+	{
+		// TODO
+		window.rent_objects.filters.push({type: 'type', value: 2});
+		window.rent_objects.filter();
+	};
 	window.rent_objects.init = function()
 	{
 		if(!window.rent_objects.filters)
@@ -821,6 +1256,21 @@ SQL_BLOCK;
 			window.rent_objects.sort_order = 'name';
 		}
 		window.rent_objects.filter();
+		window.rent_objects.add_listners();
+	};
+	window.rent_objects.add_listners = function()
+	{
+		var elements = document.getElementsByClassName('rent_object_add_filters');
+		var elements_count = elements.length;
+		for(var index = 0; index < elements_count; index++)
+		{
+			var element = elements[index];
+
+			// W3C
+			if(window.addEventListener) element.addEventListener('click', window.rent_objects.add_filter, false);
+			// IE
+			else element.attachEvent('click', window.rent_objects.add_filter);
+		}
 	};
 
 	// W3C
@@ -833,7 +1283,7 @@ HTML_BLOCK;
 
 	function display_filters()
 	{
-		return "[TODO Filters]";
+		return "<ul class=\"rent_object_filters\"></ul><p class=\"rent_object_add_filters\">Lägg till Filter</p>";
 	}
 
 	function display_list()

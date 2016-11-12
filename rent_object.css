@@ -1,0 +1,25 @@
+div.rent_object p.rent_object_ingress
+{
+	font-weight: bold;
+}
+
+div.rent_object dt
+{
+	font-weight: bold;
+}
+
+p.rent_object_footer
+{
+	color: gray;
+}
+
+div.rent_object div.map_wrapper
+{
+    height: 400px;
+}
+
+div.rent_object div.map_canvas
+{
+    width: 100%;
+    height: 100%;
+}

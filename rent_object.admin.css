@@ -1,0 +1,16 @@
+#toplevel_page_rent_objects .dashicons-admin-generic::before
+{
+	content: "\f541";
+}
+
+.wp-list-table .column-rent_object_id
+{
+	width: 30px;
+}
+
+#rent_object_form textarea
+{
+	min-height: 2em;
+	height: 10em;
+	max-height: 200em;
+}

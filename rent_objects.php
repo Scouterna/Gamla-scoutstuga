@@ -1276,7 +1276,7 @@ SQL_BLOCK;
 	// W3C
 	if(window.addEventListener) window.addEventListener('load', window.rent_objects.init, false);
 	// IE
-	else window.attachEvent('onload', window.rent_objects,init);
+	else window.attachEvent('onload', window.rent_objects.init);
 </script>
 HTML_BLOCK;
 	}

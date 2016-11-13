@@ -21,6 +21,8 @@ add_action("admin_menu", array("rent_object_holder", "init_admin"));
 add_action("wp", array("rent_object_holder", "init_wp"));
 add_action('admin_post_nopriv_add_rent_object', array("rent_object_holder", 'add_new_user') );
 add_action('admin_post_add_rent_object', array("rent_object_holder", 'add_new_user') );
+add_action('admin_post_nopriv_rent_object_export', array("rent_object_holder", 'rent_object_json_export') );
+add_action('admin_post_rent_object_export', array("rent_object_holder", 'rent_object_json_export') );
 
 // save the relative path, as __FILE__ only gives the absolte path
 rent_object_holder::$filename = $plugin;
@@ -701,44 +703,15 @@ SQL_BLOCK;
 			return "";
 		}
 
+		$items = $this->export_itmes();
+
+		if($filter)
+		{
+			$items['filters'] = $filter;
+		}
+		$rent_objects_json = json_encode($items, JSON_NUMERIC_CHECK + JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES + JSON_UNESCAPED_UNICODE);
+
 		$added = TRUE;
-
-		$settings = array();
-		foreach($wpdb->get_results("SELECT rent_object_settings_name_id AS option, setting_name AS name FROM {$wpdb->prefix}rent_object_settings_names", 'ARRAY_A') as $row)
-		{
-			$settings[$row['option']] = $row;
-		}
-		foreach($wpdb->get_results("SELECT rent_object_settings_name_id AS option, option_name AS name, option_value AS value FROM {$wpdb->prefix}rent_object_settings_options", 'ARRAY_A') as $row)
-		{
-			$settings[$row['option']]['options'][] = $row;
-		}
-
-		$items = array();
-		foreach($wpdb->get_results("SELECT rent_object_id, rent_organisation_id, rent_object_type_id, name, beds, position_latitude, position_longitude, city, object_updated, type_name, CONCAT(types.url, rent_object_id) AS url FROM {$wpdb->prefix}rent_object LEFT JOIN {$wpdb->prefix}rent_object_types AS types USING (rent_object_type_id) WHERE object_status = 1", 'ARRAY_A') as $row)
-		{
-			$items[$row['rent_object_id']] = $row;
-		}
-		foreach($wpdb->get_results("SELECT * FROM {$wpdb->prefix}rent_object_settings_options", 'ARRAY_A') as $row)
-		{
-			if(empty($items[$row['rent_object_id']]))
-			{
-				continue;
-			}
-			$items[$row['rent_object_id']]['options'][] = array('option' => $row['rent_object_settings_name_id'], 'value' => $row['option_value']);
-		}
-
-		$types = $wpdb->get_results("SELECT rent_object_type_id AS id, type_name AS name FROM {$wpdb->prefix}rent_object_types", 'ARRAY_A');
-
-		$organisations = $wpdb->get_results("SELECT rent_organisation_id AS id, parent_organisation_id AS parent_id, organisation_name AS name FROM {$wpdb->prefix}rent_organisations WHERE object_status = 1", 'ARRAY_A');
-
-		$rent_objects_json = json_encode(
-			array(
-				'settings' => array_values($settings),
-				'objects' => array_values($items),
-				'organisations' => $organisations,
-				'object_types' => $types,
-				'filters' => $filter,
-			), JSON_NUMERIC_CHECK + JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES + JSON_UNESCAPED_UNICODE);
 
 		$x_img = plugins_url(basename(dirname(rent_object_holder::$filename)) . '/x.png');
 		$x_img_json = json_encode($x_img);
@@ -1864,6 +1837,96 @@ SQL_BLOCK;
 		// redirect the user to the page where the user can update the object with more information
 		wp_redirect(admin_url("admin.php?page=rent_objects&id={$rent_object_id}"));
 		die();
+	}
+
+	function export_itmes()
+	{
+		global $wpdb;
+
+		$settings = array();
+		foreach($wpdb->get_results("SELECT rent_object_settings_name_id AS option, setting_name AS name FROM {$wpdb->prefix}rent_object_settings_names", 'ARRAY_A') as $row)
+		{
+			$settings[$row['option']] = $row;
+		}
+		foreach($wpdb->get_results("SELECT rent_object_settings_name_id AS option, option_name AS name, option_value AS value FROM {$wpdb->prefix}rent_object_settings_options", 'ARRAY_A') as $row)
+		{
+			$settings[$row['option']]['options'][] = $row;
+		}
+
+		$types = $wpdb->get_results("SELECT rent_object_type_id AS id, type_name AS name, url, price_scenario_id FROM {$wpdb->prefix}rent_object_types", 'ARRAY_A');
+		$types_indexed = array_combine(array_column($types, 'id'), $types);
+
+		$organisations = $wpdb->get_results("SELECT rent_organisation_id AS id, parent_organisation_id AS parent_id, organisation_name AS name FROM {$wpdb->prefix}rent_organisations WHERE object_status = 1", 'ARRAY_A');
+
+		$price_scenarios = $this->price_scenarios();
+
+		$items = array();
+		foreach($wpdb->get_results("SELECT rent_object_id, rent_organisation_id, rent_object_type_id, name, beds, position_latitude, position_longitude, city, object_updated, type_name, CONCAT(types.url, rent_object_id) AS url FROM {$wpdb->prefix}rent_object LEFT JOIN {$wpdb->prefix}rent_object_types AS types USING (rent_object_type_id) WHERE object_status = 1", 'ARRAY_A') as $row)
+		{
+			$items[$row['rent_object_id']] = $row;
+		}
+		foreach($wpdb->get_results("SELECT * FROM {$wpdb->prefix}rent_object_settings_options", 'ARRAY_A') as $row)
+		{
+			if(empty($items[$row['rent_object_id']]))
+			{
+				continue;
+			}
+			$items[$row['rent_object_id']]['options'][] = array('option' => $row['rent_object_settings_name_id'], 'value' => $row['option_value']);
+		}
+		foreach($wpdb->get_results("SELECT prices.*, prices.price / scenarios.people / scenarios.days AS pppd, scenarios.price_scenario_name FROM {$wpdb->prefix}rent_prices AS prices LEFT JOIN {$wpdb->prefix}rent_price_scenarios AS scenarios USING (price_scenario_id)", 'ARRAY_A') as $row)
+		{
+			if(empty($items[$row['rent_object_id']]))
+			{
+				continue;
+			}
+
+			$items[$row['rent_object_id']]['price'][] = array('price_scenario_id' => $row['price_scenario_id'], 'value' => $row['price'], 'pppd' => $row['pppd']);
+
+			if(isset($types_indexed[$items[$row['rent_object_id']]['rent_object_type_id']]['price_scenario_id']) AND $row['price_scenario_id'] == $types_indexed[$items[$row['rent_object_id']]['rent_object_type_id']]['price_scenario_id'])
+			{
+				$items[$row['rent_object_id']]['senario_price'] = $row['price'];
+				$items[$row['rent_object_id']]['senario_pppd'] = $row['pppd'];
+				$items[$row['rent_object_id']]['senario_price_name'] = $row['price_scenario_name'];
+			}
+		}
+
+		return array(
+			'settings' => array_values($settings),
+			'objects' => array_values($items),
+			'organisations' => $organisations,
+			'object_types' => $types,
+			'price_scenarios' => $price_scenarios,
+		);
+
+	}
+
+	function rent_object_json_export()
+	{
+		$items = $this->export_itmes();
+		$rent_objects_json = json_encode($items, JSON_NUMERIC_CHECK + JSON_PRETTY_PRINT + JSON_UNESCAPED_SLASHES + JSON_UNESCAPED_UNICODE);
+		$mode = empty($_REQUST['mode']) ? 'json' : $_REQUST['mode'];
+		switch($mode)
+		{
+			case 'html';
+			case 'jselement';
+			{
+				echo '<script type="text/javascript">window.rent_objects = ' . $rent_objects_json . '</script>'. PHP_EOL;
+				die();
+			}
+
+			case 'js';
+			{
+				echo 'window.rent_objects = ' . $rent_objects_json . PHP_EOL;
+				die();
+			}
+
+			case 'json';
+			default:
+			{
+				echo $rent_objects_json . PHP_EOL;
+				die();
+			}
+		}
 	}
 
 	static function check_permission($rent_object_id)

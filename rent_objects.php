@@ -173,6 +173,26 @@ class rent_object_holder
 				}
 			}
 			
+			$price_scenarios = $this->price_scenarios($id);
+			$price_updates = array();
+			foreach($price_scenarios as $price_scenario)
+			{
+				$price_scenario_id = $price_scenario['price_scenario_id'];
+				if(isset($postdata['price'][$price_scenario_id]))
+				{
+					$postdata['price'][$price_scenario_id] = (int) $postdata['price'][$price_scenario_id];
+					if(isset($old_rent_object['price'][$price_scenario_id]) AND $postdata['price'][$price_scenario_id] == $old_rent_object['price'][$price_scenario_id])
+					{
+						continue;
+					}
+					if(isset($price_scenario['price']) AND $postdata['price'][$price_scenario_id] == $price_scenario['price'])
+					{
+						continue;
+					}
+					$price_updates[$price_scenario_id] = $postdata['price'][$price_scenario_id];
+				}
+			}
+
 			$result = FALSE;
 			if($allowed AND $rent_option_updates)
 			{
@@ -202,7 +222,23 @@ class rent_object_holder
 					}
 				}
 			}
-			
+
+			if($allowed AND $price_updates)
+			{
+				foreach($price_updates as $price_scenario_id => $price)
+				{
+					$result = $wpdb->replace(
+						"{$wpdb->prefix}rent_prices",
+						array(
+							'rent_object_id' => $id,
+							'price_scenario_id' => $price_scenario_id,
+							'price' => $price,
+							'user_id' => $user_id,
+						)
+					);
+				}
+			}
+
 			if($allowed AND $rent_object_updates)
 			{
 				$rent_object_updates['user_id'] = $user_id;
@@ -210,13 +246,15 @@ class rent_object_holder
 
 				if($result)
 				{
-					
+
 				}
 				else
 				{
-					
+
 				}
 			}
+
+
 		}
 		else if(isset($_GET['id']))
 		{
@@ -247,7 +285,6 @@ class rent_object_holder
 
 			$rent_object['options'] = $this->object_settings($rent_object['rent_object_id']);
 
-			printf('<input type="hidden" name="before" value="%s" />' . PHP_EOL, htmlentities(json_encode($rent_object)));
 			echo '<div class="postbox">' . PHP_EOL;
 
 			if($rent_object['rent_object_id'])
@@ -339,13 +376,6 @@ class rent_object_holder
 			echo '<p>Webaddress till aktuell information om anläggningen.</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
-			// beds
-			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="beds">Sovplatser</label>' . PHP_EOL;
-			printf('<input type="text" aria-required="true" value="%s" id="beds" name="beds">' . PHP_EOL, htmlentities($rent_object['beds']));
-			echo '<p>Antal sovplatser på anläggningen.</p>' . PHP_EOL;
-			echo '</div>' . PHP_EOL;
-
 			// visit_adress
 			echo '<div class="form-field">' . PHP_EOL;
 			echo '<label for="visit_adress">Besöksadress</label>' . PHP_EOL;
@@ -373,6 +403,8 @@ class rent_object_holder
 			echo '<p>Var ska anlägningen synas på kartvyn.</p>' . PHP_EOL;
 			echo '<p><b>TODO</b>: Select by adress or map, using google-map-api</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
+
+			echo "<h3>Kontaktperson</h3>";
 
 			// contact_name
 			echo '<div class="form-field form-required">' . PHP_EOL;
@@ -402,6 +434,15 @@ class rent_object_holder
 			echo '<p>Mer info om kontakt, tex länk till bokningssida.</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
+			echo "<h3>Sökbara parametrar</h3>";
+
+			// beds
+			echo '<div class="form-field form-required">' . PHP_EOL;
+			echo '<label for="beds">Sovplatser</label>' . PHP_EOL;
+			printf('<input type="text" aria-required="true" value="%s" id="beds" name="beds">' . PHP_EOL, htmlentities($rent_object['beds']));
+			echo '<p>Antal sovplatser på anläggningen.</p>' . PHP_EOL;
+			echo '</div>' . PHP_EOL;
+
 			$setting_names = $this->object_settings_names();
 			$setting_options = $this->object_settings_options();
 			
@@ -421,7 +462,22 @@ class rent_object_holder
 			}
 			
 			echo '<p><b>TODO</b>: Bilder</p>' . PHP_EOL;
-			echo '<p><b>TODO</b>: Priser</p>' . PHP_EOL;
+			echo "<h3>Sökbara Prissenarion</h3>";
+			echo "<p>Här ges exemple på grupper som skulle vilja hyra eran anläggning, ange totalpriset denna grupp skulle få betala för angiven tidsperiod.</p>";
+
+			$price_scenarios = $this->price_scenarios($id);
+			foreach($price_scenarios as $price_scenario)
+			{
+				$price_scenario_html = array_map('htmlentities', $price_scenario);
+				echo '<div class="form-field">' . PHP_EOL;
+				echo "<label for=\"rent_object_price_scenario_{$price_scenario['price_scenario_id']}\">{$price_scenario_html['price_scenario_name']}</label>" . PHP_EOL;
+				echo "<input id=\"rent_object_price_scenario_{$price_scenario['price_scenario_id']}\" name=\"price[{$price_scenario['price_scenario_id']}]\" value=\"{$price_scenario_html['price']}\" />" . PHP_EOL;
+				echo "<p>{$price_scenario_html['price_scenario']}</p>" . PHP_EOL;
+				echo '</div>' . PHP_EOL;
+
+				$rent_object['price'][$price_scenario['price_scenario_id']] = $price_scenario['price'];
+			}
+			printf('<input type="hidden" name="before" value="%s" />' . PHP_EOL, htmlentities(json_encode($rent_object)));
 
 			echo '<p>';
 			if($rent_object['object_status'])
@@ -507,6 +563,28 @@ SQL_BLOCK;
 		return $options;
 	}
 	
+	function price_scenarios($rent_object_id = NULL)
+	{
+		global $wpdb;
+
+		$rent_object_id = (int) $rent_object_id;
+		if($rent_object_id)
+		{
+			$query = <<<SQL_BLOCK
+SELECT price_scenarios.*, prices.price, prices.price / people / days AS pppd, prices.price_updated
+FROM {$wpdb->prefix}rent_price_scenarios AS price_scenarios
+	LEFT JOIN {$wpdb->prefix}rent_prices AS prices ON (prices.price_scenario_id = price_scenarios.price_scenario_id AND prices.rent_object_id = {$rent_object_id})
+ORDER BY prio DESC, days*people, days, people
+SQL_BLOCK;
+		}
+		else
+		{
+			$query = "SELECT price_scenarios.* FROM {$wpdb->prefix}rent_price_scenarios AS price_scenarios ORDER BY prio DESC, days * people, days, people";
+		}
+
+		return $wpdb->get_results($query, 'ARRAY_A');
+	}
+
 	function shortcode_stuga($raw_attributes)
 	{
 		$default_attributes = array('id' => NULL, 'mode' => '', 'filter' => NULL, 'def' => NULL);
@@ -669,6 +747,8 @@ SQL_BLOCK;
 <script type="text/javascript">
 	window.rent_objects = {$rent_objects_json};
 
+	/** TODO: move javascript-functions to file **/
+
 	window.rent_objects.fetch_item_by_id = function(list, id_field, id_value, select_field)
 	{
 		var l = list.length;
@@ -806,7 +886,24 @@ SQL_BLOCK;
 					}
 					case 'price':
 					{
-						// TODO
+						var price_count = object.price.length;
+						var price = false;
+						for(var price_index = 0; price_index < price_count; price_index++)
+						{
+							if(object.price[price_index].price_scenario_id == filter.price_scenario_id)
+							{
+								price = object.price[price_index].value;
+								break;
+							}
+						}
+						if(!price)
+						{
+							ok = false;
+						}
+						else if(price > filter.value)
+						{
+							ok = false;
+						}
 					}
 				}
 			}
@@ -917,9 +1014,10 @@ SQL_BLOCK;
 
 				// Price
 				var td = document.createElement('td');
-				if(false)
+				if(object.senario_price)
 				{
-					// TODO
+					td.innerText = object.senario_price + ' kr';
+					td.title = 'Pris för ' + object.senario_price_name + ' ~= ' + object.senario_pppd + ' kr per person och dygn';
 				}
 				else
 				{
@@ -933,11 +1031,13 @@ SQL_BLOCK;
 		// TODO
 		// ...
 	};
+
 	window.rent_objects.update_map = function()
 	{
 		// TODO
 		// ...
 	};
+
 	window.rent_objects.render_filters = function()
 	{
 		var elements = document.getElementsByClassName('rent_object_filters');
@@ -1161,7 +1261,21 @@ SQL_BLOCK;
 					}
 					case 'price':
 					{
-						// TODO
+						var senario = false;
+						var ps_count = rent_objects.price_scenarios.length;
+						for(var ps_index = 0; ps_index < ps_count; ps_index++)
+						{
+							if(rent_objects.price_scenarios[ps_index].price_scenario_id == filter.price_scenario_id)
+							{
+								senario = rent_objects.price_scenarios[ps_index];
+								break;
+							}
+						}
+						if(senario)
+						{
+							li_text = 'Max ' + filter.value + ' kr för pris-senario ' + senario.price_scenario_name + ' (Max ' + Math.round( filter.value / senario.days / senario.people ) + ' kr / person / dag)';
+						}
+						break;
 					}
 				}
 			}
@@ -1218,6 +1332,7 @@ SQL_BLOCK;
 			}
 		}
 	};
+
 	window.rent_objects.remove_filter = function(filter)
 	{
 		var filters = window.rent_objects.filters;
@@ -1251,6 +1366,7 @@ SQL_BLOCK;
 		}
 		window.rent_objects.filter();
 	}
+
 	window.rent_objects.add_filter = function(filter)
 	{
 		var filters = window.rent_objects.filters;
@@ -1271,6 +1387,7 @@ SQL_BLOCK;
 		filters.push(filter);
 		window.rent_objects.filter();
 	};
+
 	window.rent_objects.hide_add_filter = function(filter)
 	{
 		if(filter && filter.type && (filter.value || filter.method))
@@ -1279,7 +1396,8 @@ SQL_BLOCK;
 		}
 		var element = document.getElementById('rent_object_add_filter_dialog');
 		element.style.display = 'none';
-	}
+	};
+
 	window.rent_objects.show_add_filter = function()
 	{
 		var element = document.getElementById('rent_object_add_filter_dialog');
@@ -1288,46 +1406,73 @@ SQL_BLOCK;
 			element = document.createElement('div');
 			element.id = 'rent_object_add_filter_dialog';
 
+			var bg_element = document.createElement('div');
 			// W3C
-			if(window.addEventListener) element.addEventListener('click', window.rent_objects.hide_add_filter, false);
+			if(window.addEventListener) bg_element.addEventListener('click', window.rent_objects.hide_add_filter, false);
 			// IE
-			else element.attachEvent('click', window.rent_objects.hide_add_filter);
+			else bg_element.attachEvent('click', window.rent_objects.hide_add_filter);
 
+			element.appendChild(bg_element);
+
+			var fg_element = document.createElement('div');
+			element.appendChild(fg_element);
 			document.body.appendChild(element);
+			element = fg_element;
 		}
-		var content = '<div></div>'
-			+ '<div>'
-				+ '<h3>Välj Filter</h3>'
-				+ '<fieldset id="rento_object_add_option"></fieldset>'
+		else
+		{
+			element.style.display = 'block';
+			element = element.children[1];
+		}
+		var content = '<h3>Välj Filter</h3>'
+			+ '<fieldset id="rento_object_add_option"></fieldset>'
 
-				+ '<fieldset><legend>Typ</legend>'
-					+ '<input type="button" value="Stuga" onclick="window.rent_objects.hide_add_filter({type: &quot;type&quot;, value: 1})" />'
-					+ '<input type="button" value="Lägerplats" onclick="window.rent_objects.hide_add_filter({type: &quot;type&quot;, value: 2})" />'
-				+ '</fieldset>'
+			+ '<fieldset><legend>Typ</legend>'
+				+ '<input type="button" value="Stuga" onclick="window.rent_objects.hide_add_filter({type: &quot;type&quot;, value: 1})" />'
+				+ '<input type="button" value="Lägerplats" onclick="window.rent_objects.hide_add_filter({type: &quot;type&quot;, value: 2})" />'
+			+ '</fieldset>'
 
-				+ '<fieldset><legend>Namn</legend>'
-					+ '<input type="button" value="Namn innhåller" onclick="var f = {type: &quot;name&quot;, method: &quot;contains&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-					+ '<input type="button" value="Namn börjar med" onclick="var f = {type: &quot;name&quot;, method: &quot;begins&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-					+ '<input type="button" value="Namn slutar med" onclick="var f = {type: &quot;name&quot;, method: &quot;ends&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-					+ '<input type="button" value="Namn regexp" onclick="var f = {type: &quot;name&quot;, method: &quot;regexp&quot;}; f.value = prompt(this.value, &quot;^.*$&quot;); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-				+ '</fieldset>'
+			+ '<fieldset><legend>Namn</legend>'
+				+ '<input type="button" value="Namn innhåller" onclick="var f = {type: &quot;name&quot;, method: &quot;contains&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '<input type="button" value="Namn börjar med" onclick="var f = {type: &quot;name&quot;, method: &quot;begins&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '<input type="button" value="Namn slutar med" onclick="var f = {type: &quot;name&quot;, method: &quot;ends&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '<input type="button" value="Namn regexp" onclick="var f = {type: &quot;name&quot;, method: &quot;regexp&quot;}; f.value = prompt(this.value, &quot;^.*$&quot;); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+			+ '</fieldset>'
 
-				+ '<fieldset><legend>Organisation</legend>'
-					+ '<input type="button" value="Organisation innhåller" onclick="var f = {type: &quot;organisation&quot;, method: &quot;contains&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-					+ '<input type="button" value="Organisation börjar med" onclick="var f = {type: &quot;organisation&quot;, method: &quot;begins&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-					+ '<input type="button" value="Organisation slutar med" onclick="var f = {type: &quot;organisation&quot;, method: &quot;ends&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-					+ '<input type="button" value="Organisation regexp" onclick="var f = {type: &quot;organisation&quot;, method: &quot;regexp&quot;}; f.value = prompt(this.value, &quot;^.*$&quot;); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
-				+ '</fieldset>'
+			+ '<fieldset><legend>Organisation</legend>'
+				+ '<input type="button" value="Organisation innhåller" onclick="var f = {type: &quot;organisation&quot;, method: &quot;contains&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '<input type="button" value="Organisation börjar med" onclick="var f = {type: &quot;organisation&quot;, method: &quot;begins&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '<input type="button" value="Organisation slutar med" onclick="var f = {type: &quot;organisation&quot;, method: &quot;ends&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '<input type="button" value="Organisation regexp" onclick="var f = {type: &quot;organisation&quot;, method: &quot;regexp&quot;}; f.value = prompt(this.value, &quot;^.*$&quot;); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+			+ '</fieldset>'
 
-				+ '<fieldset><legend>Sovplatser</legend>'
-					+ '<input type="button" value="Minst antal sovplatser" onclick="var f = {type: &quot;beds&quot;, method: &quot;more&quot;}; f.value = parseInt(prompt(this.value, 10)); if(f.value > 0) window.rent_objects.hide_add_filter(f);" />'
-					+ '<input type="button" value="Max antal sovplatser" onclick="var f = {type: &quot;beds&quot;, method: &quot;less&quot;}; f.value = parseInt(prompt(this.value, 10)); if(f.value > 0) window.rent_objects.hide_add_filter(f);" />'
-				+ '</fieldset>'
+			+ '<fieldset><legend>Sovplatser</legend>'
+				+ '<input type="button" value="Minst antal sovplatser" onclick="var f = {type: &quot;beds&quot;, method: &quot;more&quot;}; f.value = parseInt(prompt(this.value, 10)); if(f.value > 0) window.rent_objects.hide_add_filter(f);" />'
+				+ '<input type="button" value="Max antal sovplatser" onclick="var f = {type: &quot;beds&quot;, method: &quot;less&quot;}; f.value = parseInt(prompt(this.value, 10)); if(f.value > 0) window.rent_objects.hide_add_filter(f);" />'
+			+ '</fieldset>'
 
-			+ '</div>';
+			+ '<fieldset><legend>Pris</legend>';
+		var ps_count = rent_objects.price_scenarios.length;
+		for(var ps_index = 0; ps_index < ps_count; ps_index++)
+		{
+			var senario = rent_objects.price_scenarios[ps_index];
+
+			content += '<input type="button" value="' +
+				senario.price_scenario_name +
+				'" onclick="var f = {type: &quot;price&quot;, method: &quot;less&quot;, price_scenario_id: ' +
+				senario.price_scenario_id +
+				'}; f.value = parseInt(prompt(&quot;Max pris för &quot; + this.value + &quot;\\\\n&quot; + &quot;' +
+				senario.price_scenario +
+				'&quot;, ' +
+				(100 * senario.days * senario.people) +
+				')); if(f.value > 0) window.rent_objects.hide_add_filter(f);" />';
+		}
+
+		content += '</fieldset>'
+
 		element.innerHTML = content;
-		element.style.display = 'block';
 	};
+
 	window.rent_objects.init = function()
 	{
 		if(!window.rent_objects.filters)
@@ -1341,6 +1486,7 @@ SQL_BLOCK;
 		window.rent_objects.filter();
 		window.rent_objects.add_listners();
 	};
+
 	window.rent_objects.add_listners = function()
 	{
 		var elements = document.getElementsByClassName('rent_object_add_filters');

@@ -737,11 +737,22 @@ SQL_BLOCK;
 					}
 					case 'organisation':
 					{
-						if(!window.rent_objects.organisations[object.rent_organisation_id])
+						var organisation = false;
+						var organisations = window.rent_objects.organisations;
+						var organisation_count = organisations.length;
+						for(var o_index = 0; o_index < organisation_count; o_index++)
+						{
+							if(organisations[o_index].id == object.rent_organisation_id)
+							{
+								organisation = organisations[o_index].name;
+								break;
+							}
+						}
+						if(!organisation)
 						{
 							ok = false;
 						}
-						else if(!window.rent_objects.filter_text(window.rent_objects.organisations[object.rent_organisation_id].name, filter.value, filter.method))
+						else if(!window.rent_objects.filter_text(organisation, filter.value, filter.method))
 						{
 							ok = false;
 						}
@@ -1238,12 +1249,84 @@ SQL_BLOCK;
 				break;
 			}
 		}
-	}
-	window.rent_objects.add_filter = function()
-	{
-		// TODO
-		window.rent_objects.filters.push({type: 'type', value: 2});
 		window.rent_objects.filter();
+	}
+	window.rent_objects.add_filter = function(filter)
+	{
+		var filters = window.rent_objects.filters;
+		switch(filter.type)
+		{
+			case 'type':
+			{
+				var filter_count = filters.length;
+				for(var index = filter_count - 1; index >= 0; index--)
+				{
+					if(filters[index].type == filter.type)
+					{
+						window.rent_objects.remove_filter(filters[index]);
+					}
+				}
+			}
+		}
+		filters.push(filter);
+		window.rent_objects.filter();
+	};
+	window.rent_objects.hide_add_filter = function(filter)
+	{
+		if(filter && filter.type && (filter.value || filter.method))
+		{
+			window.rent_objects.add_filter(filter);
+		}
+		var element = document.getElementById('rent_object_add_filter_dialog');
+		element.style.display = 'none';
+	}
+	window.rent_objects.show_add_filter = function()
+	{
+		var element = document.getElementById('rent_object_add_filter_dialog');
+		if(!element)
+		{
+			element = document.createElement('div');
+			element.id = 'rent_object_add_filter_dialog';
+
+			// W3C
+			if(window.addEventListener) element.addEventListener('click', window.rent_objects.hide_add_filter, false);
+			// IE
+			else element.attachEvent('click', window.rent_objects.hide_add_filter);
+
+			document.body.appendChild(element);
+		}
+		var content = '<div></div>'
+			+ '<div>'
+				+ '<h3>Välj Filter</h3>'
+				+ '<fieldset id="rento_object_add_option"></fieldset>'
+
+				+ '<fieldset><legend>Typ</legend>'
+					+ '<input type="button" value="Stuga" onclick="window.rent_objects.hide_add_filter({type: &quot;type&quot;, value: 1})" />'
+					+ '<input type="button" value="Lägerplats" onclick="window.rent_objects.hide_add_filter({type: &quot;type&quot;, value: 2})" />'
+				+ '</fieldset>'
+
+				+ '<fieldset><legend>Namn</legend>'
+					+ '<input type="button" value="Namn innhåller" onclick="var f = {type: &quot;name&quot;, method: &quot;contains&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+					+ '<input type="button" value="Namn börjar med" onclick="var f = {type: &quot;name&quot;, method: &quot;begins&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+					+ '<input type="button" value="Namn slutar med" onclick="var f = {type: &quot;name&quot;, method: &quot;ends&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+					+ '<input type="button" value="Namn regexp" onclick="var f = {type: &quot;name&quot;, method: &quot;regexp&quot;}; f.value = prompt(this.value, &quot;^.*$&quot;); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '</fieldset>'
+
+				+ '<fieldset><legend>Organisation</legend>'
+					+ '<input type="button" value="Organisation innhåller" onclick="var f = {type: &quot;organisation&quot;, method: &quot;contains&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+					+ '<input type="button" value="Organisation börjar med" onclick="var f = {type: &quot;organisation&quot;, method: &quot;begins&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+					+ '<input type="button" value="Organisation slutar med" onclick="var f = {type: &quot;organisation&quot;, method: &quot;ends&quot;}; f.value = prompt(this.value); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+					+ '<input type="button" value="Organisation regexp" onclick="var f = {type: &quot;organisation&quot;, method: &quot;regexp&quot;}; f.value = prompt(this.value, &quot;^.*$&quot;); if(f.value > &quot;&quot;) window.rent_objects.hide_add_filter(f);" />'
+				+ '</fieldset>'
+
+				+ '<fieldset><legend>Sovplatser</legend>'
+					+ '<input type="button" value="Minst antal sovplatser" onclick="var f = {type: &quot;beds&quot;, method: &quot;more&quot;}; f.value = parseInt(prompt(this.value, 10)); if(f.value > 0) window.rent_objects.hide_add_filter(f);" />'
+					+ '<input type="button" value="Max antal sovplatser" onclick="var f = {type: &quot;beds&quot;, method: &quot;less&quot;}; f.value = parseInt(prompt(this.value, 10)); if(f.value > 0) window.rent_objects.hide_add_filter(f);" />'
+				+ '</fieldset>'
+
+			+ '</div>';
+		element.innerHTML = content;
+		element.style.display = 'block';
 	};
 	window.rent_objects.init = function()
 	{
@@ -1267,9 +1350,9 @@ SQL_BLOCK;
 			var element = elements[index];
 
 			// W3C
-			if(window.addEventListener) element.addEventListener('click', window.rent_objects.add_filter, false);
+			if(window.addEventListener) element.addEventListener('click', window.rent_objects.show_add_filter, false);
 			// IE
-			else element.attachEvent('click', window.rent_objects.add_filter);
+			else element.attachEvent('click', window.rent_objects.show_add_filter);
 		}
 	};
 
@@ -1283,7 +1366,9 @@ HTML_BLOCK;
 
 	function display_filters()
 	{
-		return "<ul class=\"rent_object_filters\"></ul><p class=\"rent_object_add_filters\">Lägg till Filter</p>";
+		$add_img = plugins_url(basename(dirname(rent_object_holder::$filename)) . '/add.png');
+		$add_img_html = htmlentities($add_img);
+		return "<h3>Filter</h3><ul class=\"rent_object_filters\"></ul><p class=\"rent_object_add_filters\"><img src=\"{$add_img_html}\" alt=\"[+]\" /><span>Lägg till Filter</span></p>";
 	}
 
 	function display_list()

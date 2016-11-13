@@ -23,3 +23,36 @@ div.rent_object div.map_canvas
     width: 100%;
     height: 100%;
 }
+
+#rent_object_add_filter_dialog
+{
+	position: absolute;
+	top: 50px;
+	bottom: 10px;
+	left: 10px;
+	right: 10px;
+}
+#rent_object_add_filter_dialog > DIV:first-child
+{
+	position: fixed;
+	top: 0px;
+	bottom: 0px;
+	left: 0px;
+	right: 0px;
+	background: rgba(127, 127, 127, 0.5);
+	max-width: 100%;
+}
+#rent_object_add_filter_dialog > DIV
+{
+	position: relative;
+	max-width: 945px;
+	background: #F3F1E6;
+	border: solid black 3px;
+	margin: auto;
+	padding: 30px;
+	min-height: 200px;
+}
+#rent_object_add_filter_dialog #rento_object_add_option
+{
+	display: none;
+}

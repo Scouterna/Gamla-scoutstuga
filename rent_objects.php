@@ -760,7 +760,51 @@ SQL_BLOCK;
 				{
 					case 'option':
 					{
-						// TODO
+						var option = false;
+						var option_count = object.options.length;
+						for(var o_index = 0; o_index < option_count; o_index++)
+						{
+							if(object.options[o_index].option == filter.option)
+							{
+								option = object.options[o_index];
+								break;
+							}
+						}
+						if(filter.method == "show")
+						{
+							if(!option)
+							{
+								ok = false;
+								break;
+							}
+							var value_count = filter.values.length;
+							var found = false;
+							for(var v_index = 0; v_index < value_count; v_index++)
+							{
+								if(option.value == filter.values[v_index])
+								{
+									found = true;
+									break;
+								}
+							}
+							if(!found)
+							{
+								ok = false;
+							}
+						}
+						else if(filter.method == "hide")
+						{
+							var value_count = filter.values.length;
+							for(var v_index = 0; v_index < value_count; v_index++)
+							{
+								if(option.value == filter.values[v_index])
+								{
+									ok = false;
+									break;
+								}
+							}
+						}
+						break;
 					}
 					case 'type':
 					{
@@ -1226,7 +1270,58 @@ SQL_BLOCK;
 					}
 					case 'option':
 					{
-						// TODO
+						var s = false;
+						var s_count = rent_objects.settings.length;
+						for(var s_index = 0; s_index < s_count; s_index++)
+						{
+							if(rent_objects.settings[s_index].option == filter.option)
+							{
+								s = rent_objects.settings[s_index];
+								break;
+							}
+						}
+						if(s)
+						{
+							var names = [];
+							var v_count = filter.values.length;
+							var o_count = s.options.length;
+							for(var v_index = 0; v_index < v_count; v_index++)
+							{
+								for(var o_index = 0; o_index < o_count; o_index++)
+								{
+									if(filter.values[v_index] == s.options[o_index].value)
+									{
+										names.push(s.options[o_index].name);
+										break;
+									}
+								}
+
+							}
+
+							if(filter.method == "show")
+							{
+								if(names.length == 1)
+								{
+									li_text = s.name + ' är: ' + names[0];
+								}
+								else
+								{
+									li_text = s.name + ' är någon av: ' + names.join(', ');
+								}
+							}
+							else if(filter.method == "hode")
+							{
+								if(names.length == 1)
+								{
+									li_text = s.name + ' inte är: ' + names[0];
+								}
+								else
+								{
+									li_text = s.name + ' inte är någon av: ' + names.join(', ');
+								}
+							}
+						}
+						break;
 					}
 					case 'distance':
 					{
@@ -1397,8 +1492,7 @@ SQL_BLOCK;
 			element.style.display = 'block';
 			element = element.children[1];
 		}
-		var content = '<h3>Välj Filter</h3>'
-			+ '<fieldset id="rento_object_add_option"></fieldset>'
+		var content = '<h3>Välj Filter</h3><fieldset id="rento_object_add_option"></fieldset><div>'
 
 			+ '<fieldset><legend>Typ</legend>'
 				+ '<input type="button" value="Stuga" onclick="window.rent_objects.hide_add_filter({type: &quot;type&quot;, value: 1})" />'
@@ -1443,8 +1537,209 @@ SQL_BLOCK;
 
 		content += '</fieldset>'
 
+			+ '<fieldset><legend>Övrigt</legend>';
+		var s_count = rent_objects.settings.length;
+		for(var s_index = 0; s_index < s_count; s_index++)
+		{
+			var setting = rent_objects.settings[s_index];
+
+			content += '<input type="button" value="' +
+				setting.name +
+				'" onclick="window.rent_objects.show_add_filter_options(' +
+				setting.option +
+				')" /><br />';
+		}
+
+		content += '</fieldset>'
+			+ '</div>';
+
 		element.innerHTML = content;
 	};
+
+	window.rent_objects.show_add_filter_options = function(option_id)
+	{
+		var element = document.getElementById('rento_object_add_option');
+
+		var content = '<table><thead><tr><th>Visa</th><th>Alternativ</th><th>Dölj</th></tr></thead><tbody>';
+
+		var options = false
+		var settings_count = rent_objects.settings.length;
+		for(var s_index = 0; s_index < settings_count; s_index++)
+		{
+			if(rent_objects.settings[s_index].option == option_id)
+			{
+				options = rent_objects.settings[s_index].options;
+				break;
+			}
+		}
+		if(!options)
+		{
+			return false;
+		}
+		var option_count = options.length;
+		for(var o_index = 0; o_index < option_count; o_index++)
+		{
+			var option = options[o_index];
+			content += '<tr>' +
+				'<td><input type="radio" name="option[' + option_id + '][' + option.value + ']" data-option-value="' + option.value + '" value="1" /></td>' +
+				'<td>' + option.name + '</td>' +
+				'<td><input type="radio" name="option[' + option_id + '][' + option.value + ']" data-option-value="' + option.value + '" value="-1" /></td>' +
+				'</tr>';
+		}
+
+		content += '<tfoot><tr>' +
+			'<td><input type="radio" name="option[' + option_id + '][null]" value="1" /></td>' +
+			'<td>(Ej valt)</td>' +
+			'<td><input type="radio" name="option[' + option_id + '][null]" value="-1" /></td>' +
+			'</tr></tfoot></table>' +
+			'<input type="button" value="Lägg till filter" onclick="window.rent_objects.add_filter_options(' + option_id + ', &quot;rento_object_add_option&quot;)" />';
+
+		element.innerHTML = content;
+		element.style.display = 'block';
+		element.nextElementSibling.style.display = 'none';
+	};
+
+	window.rent_objects.add_filter_options = function(option_id, parent_element)
+	{
+		var show_values = [];
+		var hide_values = [];
+		var all_values = [];
+		var null_value = 0;
+
+		if((typeof parent_element) == 'string')
+		{
+			parent_element = document.getElementById(parent_element);
+		}
+
+		if(!parent_element)
+		{
+			return false;
+		}
+
+		var inputs = parent_element.getElementsByTagName('input');
+		var input_count = inputs.length;
+		for(var index = 0; index < input_count; index++)
+		{
+			var input = inputs[index];
+
+			if(input.type != 'radio') continue;
+			if(input.name.substr(0, 7) != 'option[') continue;
+			var option_value = input.getAttribute('data-option-value');
+			if(!option_value)
+			{
+				if(input.checked)
+				{
+					null_value = parseInt(input.value);
+				}
+				continue;
+			}
+			option_value = parseInt(option_value);
+			if(!input.checked)
+			{
+				all_values.push(option_value);
+				continue;
+			}
+			if(parseInt(input.value) > 0)
+			{
+				show_values.push(option_value);
+			}
+			else
+			{
+				hide_values.push(option_value);
+			}
+		}
+
+		if(null_value > 0)
+		{
+			var a_count = all_values.length;
+			var s_count = show_values.length;
+			var h_count = hide_values.length;
+
+			for(var a_index = 0; a_index < a_count; a_index++)
+			{
+				var found = false;
+				var a = all_values[a_index];
+				for(var s_index = 0; s_index < s_count; s_index++)
+				{
+					if(show_values[s_index] == a)
+					{
+						found = true;
+						break;
+					}
+				}
+				if(found)
+				{
+					continue;
+				}
+				for(var h_index = 0; h_index < h_count; h_index++)
+				{
+					if(hide_values[h_index] == a)
+					{
+						found = true;
+						break;
+					}
+				}
+				if(found)
+				{
+					continue;
+				}
+
+				hide_values.push(a);
+				h_count++;
+			}
+
+			window.rent_objects.hide_add_filter({type: "option", option: option_id, method: "hide", values: hide_values});
+		}
+		else if(null_value < 0)
+		{
+			var a_count = all_values.length;
+			var s_count = show_values.length;
+			var h_count = hide_values.length;
+
+			for(var a_index = 0; a_index < a_count; a_index++)
+			{
+				var found = false;
+				var a = all_values[a_index];
+				for(var s_index = 0; s_index < s_count; s_index++)
+				{
+					if(show_values[s_index] == a)
+					{
+						found = true;
+						break;
+					}
+				}
+				if(found)
+				{
+					continue;
+				}
+				for(var h_index = 0; h_index < h_count; h_index++)
+				{
+					if(hide_values[h_index] == a)
+					{
+						found = true;
+						break;
+					}
+				}
+				if(found)
+				{
+					continue;
+				}
+
+				show_values.push(a);
+				s_count++;
+			}
+
+			window.rent_objects.hide_add_filter({type: "option", option: option_id, method: "show", values: show_values});
+		}
+		else if(show_values.length > 0)
+		{
+			window.rent_objects.hide_add_filter({type: "option", option: option_id, method: "show", values: show_values});
+		}
+		else if(hide_values.length > 0)
+		{
+			window.rent_objects.hide_add_filter({type: "option", option: option_id, method: "hide", values: hide_values});
+		}
+	}
 
 	window.rent_objects.init = function()
 	{
@@ -1863,9 +2158,9 @@ SQL_BLOCK;
 		$items = array();
 		foreach($wpdb->get_results("SELECT rent_object_id, rent_organisation_id, rent_object_type_id, name, beds, position_latitude, position_longitude, city, object_updated, type_name, CONCAT(types.url, rent_object_id) AS url FROM {$wpdb->prefix}rent_object LEFT JOIN {$wpdb->prefix}rent_object_types AS types USING (rent_object_type_id) WHERE object_status = 1", 'ARRAY_A') as $row)
 		{
-			$items[$row['rent_object_id']] = $row;
+			$items[$row['rent_object_id']] = $row + array('options' => array(), 'price' => array());
 		}
-		foreach($wpdb->get_results("SELECT * FROM {$wpdb->prefix}rent_object_settings_options", 'ARRAY_A') as $row)
+		foreach($wpdb->get_results("SELECT * FROM {$wpdb->prefix}rent_object_settings", 'ARRAY_A') as $row)
 		{
 			if(empty($items[$row['rent_object_id']]))
 			{

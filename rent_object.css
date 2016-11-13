@@ -56,3 +56,12 @@ div.rent_object div.map_canvas
 {
 	display: none;
 }
+#rento_object_add_option table
+{
+	border-spacing: 1px;
+}
+#rento_object_add_option table td, #rento_object_add_option table th
+{
+	border: solid black 1px;
+	padding: 2px;
+}

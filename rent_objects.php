@@ -565,7 +565,6 @@ JS_BLOCK;
 		$table->display();
 // echo "<pre>" . json_encode($table->items, JSON_PRETTY_PRINT) . "</pre>";
 		echo "<p><b>TODO:</b>(Koppla till organistation)</p>";
-		echo "<p><b>TODO:</b>Permission check, not done yet</p>";
 		echo '</form>' . PHP_EOL;
 		echo '</div>' . PHP_EOL;
 		echo "</div>";

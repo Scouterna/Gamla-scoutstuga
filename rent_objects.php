@@ -2223,7 +2223,7 @@ SQL_BLOCK;
 		$types = $wpdb->get_results("SELECT rent_object_type_id AS id, type_name AS name, url, price_scenario_id FROM {$wpdb->prefix}rent_object_types", 'ARRAY_A');
 		$types_indexed = array_combine(array_column($types, 'id'), $types);
 
-		$organisations = $wpdb->get_results("SELECT rent_organisation_id AS id, parent_organisation_id AS parent_id, organisation_name AS name FROM {$wpdb->prefix}rent_organisations WHERE object_status = 1", 'ARRAY_A');
+		$organisations = $wpdb->get_results("SELECT rent_organisation_id AS id, parent_organisation_id AS parent_id, organisation_name AS name FROM {$wpdb->prefix}rent_organisations WHERE object_status > 0", 'ARRAY_A');
 
 		$price_scenarios = $this->price_scenarios();
 

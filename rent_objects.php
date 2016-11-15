@@ -55,11 +55,11 @@ class rent_object_holder
 			$this->admin_user = current_user_can(RENT_OBJECT_ADMIN_CAP);
 			if($this->admin_user)
 			{
-				add_object_page("Anläggningar", "Stugor", RENT_OBJECT_ADMIN_CAP, "rent_objects", array($this, "rent_object_admin_page"));
+				add_object_page("Anläggningar", "Anläggningar", RENT_OBJECT_ADMIN_CAP, "rent_objects", array($this, "rent_object_admin_page"));
 			}
 			else
 			{
-				add_object_page("Anläggningar", "Stugor", RENT_OBJECT_USER_CAP, "rent_objects", array($this, "rent_object_admin_page"));
+				add_object_page("Anläggningar", "Anläggningar", RENT_OBJECT_USER_CAP, "rent_objects", array($this, "rent_object_admin_page"));
 			}
 			add_action("admin_enqueue_scripts", array($this, "rent_object_css_admin"));
 		}

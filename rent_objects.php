@@ -2228,7 +2228,7 @@ SQL_BLOCK;
 		$price_scenarios = $this->price_scenarios();
 
 		$items = array();
-		foreach($wpdb->get_results("SELECT rent_object_id, rent_organisation_id, rent_object_type_id, name, beds, position_latitude, position_longitude, city, object_updated, type_name, CONCAT(types.url, rent_object_id) AS url FROM {$wpdb->prefix}rent_object LEFT JOIN {$wpdb->prefix}rent_object_types AS types USING (rent_object_type_id) WHERE object_status = 1", 'ARRAY_A') as $row)
+		foreach($wpdb->get_results("SELECT rent_object_id, rent_organisation_id, rent_object_type_id, name, beds, position_latitude, position_longitude, city, object_updated, type_name, CONCAT(types.url, rent_object_id) AS url FROM {$wpdb->prefix}rent_object LEFT JOIN {$wpdb->prefix}rent_object_types AS types USING (rent_object_type_id) WHERE object_status > 0", 'ARRAY_A') as $row)
 		{
 			$items[$row['rent_object_id']] = $row + array('options' => array(), 'price' => array());
 		}
@@ -2423,6 +2423,7 @@ SELECT rent_object.*, rent_organisations.organisation_name, users.display_name A
 FROM {$wpdb->prefix}rent_object AS rent_object
 	LEFT JOIN {$wpdb->prefix}rent_organisations AS rent_organisations USING (rent_organisation_id)
 	LEFT JOIN {$wpdb->prefix}users AS users ON (users.ID = rent_object.user_id)
+WHERE rent_object.object_status >= 0
 ORDER BY rent_object.rent_object_id
 SQL_BLOCK;
 			$this->items = $wpdb->get_results($query, 'ARRAY_A');
@@ -2447,7 +2448,7 @@ FROM {$wpdb->prefix}rent_object AS rent_object
 	LEFT JOIN {$wpdb->prefix}rent_organisations AS rent_organisations USING (rent_organisation_id)
 	LEFT JOIN {$wpdb->prefix}users AS users ON (users.ID = rent_object.user_id)
 	LEFT JOIN {$wpdb->prefix}rent_object_permissions AS rent_object_permissions ON (rent_object_permissions.rent_object_id = rent_object.rent_object_id AND rent_object_permissions.user_id = {$user_id})
-WHERE rent_object_permissions.rent_object_id IS NOT NULL {$rent_organisations_where}
+WHERE rent_object.object_status >= 0 AND (rent_object_permissions.rent_object_id IS NOT NULL {$rent_organisations_where})
 ORDER BY rent_object.rent_object_id
 SQL_BLOCK;
 $GLOBALS['debug_query'] = $query;

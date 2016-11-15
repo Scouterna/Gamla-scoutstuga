@@ -1071,6 +1071,19 @@ SQL_BLOCK;
 				td.innerText = window.rent_objects.fetch_item_by_id(org, 'id', object.rent_organisation_id, 'name');
 				tr.appendChild(td);
 
+				// Beds
+				var td = document.createElement('td');
+				if(object.beds > 0)
+				{
+					td.innerText = object.beds;
+				}
+				else
+				{
+					td.innerText = '';
+				}
+				tr.appendChild(td);
+
+				/*
 				// Distance
 				var td = document.createElement('td');
 				if(false)
@@ -1082,13 +1095,14 @@ SQL_BLOCK;
 					td.innerText = '';
 				}
 				tr.appendChild(td);
+				*/
 
 				// Price
 				var td = document.createElement('td');
 				if(object.senario_price)
 				{
-					td.innerText = object.senario_price + ' kr';
-					td.title = 'Pris för ' + object.senario_price_name + ' ~= ' + object.senario_pppd + ' kr per person och dygn';
+					td.innerText = '~' + object.senario_pppd  + ' kr/p/d';
+					td.title = 'Pris för ' + object.senario_price_name + ': ' + object.senario_price + 'kr ~= ' + object.senario_pppd + ' kr per person och dygn';
 				}
 				else
 				{
@@ -1849,7 +1863,8 @@ HTML_BLOCK;
 			<th>Typ</th>
 			<th>Ort</th>
 			<th>Organisation</th>
-			<th>Avstång</th>
+			<!-- th>Avstånd</th -->
+			<th>Sovplatser</th>
 			<th>Pris</th>
 		</tr>
 	</thead>

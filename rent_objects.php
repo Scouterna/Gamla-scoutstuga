@@ -2095,15 +2095,15 @@ SQL_BLOCK;
 						return $user;
 					}
 
-					// Allow uploads
-					$user->add_cap('upload_files');
-
 					// login as the new user
 					$user = wp_signon(array('user_login' => $add_data['email'], 'user_password' => $add_data['password']));
 					if(is_wp_error($user))
 					{
 						return $user;
 					}
+
+					// Allow uploads
+					$user->add_cap('upload_files');
 				}
 			}
 		}

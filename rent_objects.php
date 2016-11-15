@@ -2465,6 +2465,7 @@ $GLOBALS['debug_query'] = $query;
 			"rent_object_id" => "ID",
 			"name"=> "Namn",
 			"organisation_name"=> "Organistation",
+			"object_status"=> "Status",
 			"user_name"=> "Användare",
 			"object_updated"=> "Uppdaterad",
 
@@ -2485,7 +2486,6 @@ $GLOBALS['debug_query'] = $query;
 // 			"contact_phone"=> "0525-23380",
 // 			"contact_email"=> "kragenas@gbgscout.se",
 // 			"contact_other"=> "",
-// 			"object_status"=> "1",
 		);
 	}
 
@@ -2497,6 +2497,29 @@ $GLOBALS['debug_query'] = $query;
 	function column_name($item)
 	{
 		return sprintf('<a href="?page=rent_objects&amp;id=%d">%s</a>', $item['rent_object_id'], $item['name'] ? htmlentities($item['name']) : "(namnlöss)");
+	}
+
+	function column_object_status($item)
+	{
+		switch($item['object_status'])
+		{
+			case 0:
+			{
+				return "Utkast";
+			}
+			case 1:
+			{
+				return "Publiserad";
+			}
+			case -1:
+			{
+				return "Borttagen";
+			}
+			default:
+			{
+				return "Status {$item['object_status']}";
+			}
+		}
 	}
 
 	function column_default($item, $column_name)

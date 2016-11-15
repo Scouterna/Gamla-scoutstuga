@@ -87,11 +87,18 @@ class rent_object_holder
 	{
 		wp_register_style( 'rent_object_css_admin', plugin_dir_url( __FILE__) . 'rent_object.admin.css', false, '1.0.0' );
 		wp_enqueue_style( 'rent_object_css_admin' );
+
+		// http://wordpress.stackexchange.com/questions/112592/add-media-button-in-custom-plugin
+		wp_enqueue_media();
 	}
 
 	function rent_object_admin_page()
 	{
 		global $wpdb;
+
+		// TODO: Remove later, fixing user that didn't get upload-permission on creation
+		$user = wp_get_current_user();
+		$user->add_cap('upload_files');
 
 		echo '<div class="form-wrap">' . PHP_EOL;
 		echo '<form action="#" method="post" id="rent_object_form">' . PHP_EOL;
@@ -207,7 +214,8 @@ class rent_object_holder
 							array(
 								'rent_object_id' => $id,
 								'rent_object_settings_name_id' => $option_id,
-							)
+							),
+							array('%d', '%d')
 						);
 					}
 					else
@@ -219,7 +227,8 @@ class rent_object_holder
 								'rent_object_settings_name_id' => $option_id,
 								'option_value' => $option_value, 
 								'user_id' => $user_id, 
-							)
+							),
+							array('%d', '%d', '%d', '%d')
 						);
 					}
 				}
@@ -236,8 +245,28 @@ class rent_object_holder
 							'price_scenario_id' => $price_scenario_id,
 							'price' => $price,
 							'user_id' => $user_id,
-						)
+						),
+						array('%d', '%d', '%d', '%d')
 					);
+				}
+			}
+
+			if($allowed AND !empty($postdata['new_images']))
+			{
+				foreach(explode(' ', $postdata['new_images']) as $image_id)
+				{
+					$image_id = (int) $image_id;
+					if($image_id)
+					{
+						$result = $wpdb->insert(
+							"{$wpdb->prefix}rent_object_images",
+							array(
+								'rent_object_id' => $id,
+								'image_id' => $image_id,
+							),
+							array('%d', '%d')
+						);
+					}
 				}
 			}
 
@@ -463,7 +492,32 @@ class rent_object_holder
 				echo '</div>' . PHP_EOL;
 			}
 			
-			echo '<p><b>TODO</b>: Bilder</p>' . PHP_EOL;
+			$js = <<<JS_BLOCK
+wp.media.editor.send.attachment = function(props, attachment)
+{
+	window.uploaded_attachment_id = attachment.id;
+	var element = document.getElementById('new_images');
+	if(element)
+	{
+		element.value += ' ' + attachment.id;
+		var img = document.createElement('img');
+		img.className = 'attachment-thumbnail size-thumbnail';
+		img.src = attachment.sizes.thumbnail.url;
+		element.parentNode.insertBefore(img, element);
+	}
+	console.log(attachment);
+};
+wp.media.editor.open();
+JS_BLOCK;
+			$js_html = htmlentities(str_replace("\n", " ", $js));
+			echo "<div class=\"wrap\"><h3><span>Bilder</span><span class=\"page-title-action\" onclick=\"{$js_html}\">Ny bild</span></h3>";
+
+			foreach($wpdb->get_col("SELECT image_id FROM {$wpdb->prefix}rent_object_images WHERE rent_object_id = {$id} ORDER BY pos, image_id", 0) AS $image_id)
+			{
+				echo wp_get_attachment_image($image_id, 'thumbnail');
+			}
+			echo '<input type="hidden" id="new_images" name="new_images" value="" />';
+
 			echo "<h3>Sökbara Prissenarion</h3>";
 			echo "<p>Här ges exemple på grupper som skulle vilja hyra eran anläggning, ange totalpriset denna grupp skulle få betala för angiven tidsperiod.</p>";
 
@@ -2025,6 +2079,9 @@ SQL_BLOCK;
 					{
 						return $user;
 					}
+
+					// Allow uploads
+					$user->add_cap('upload_files');
 
 					// login as the new user
 					$user = wp_signon(array('user_login' => $add_data['email'], 'user_password' => $add_data['password']));

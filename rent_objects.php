@@ -333,7 +333,7 @@ class rent_object_holder
 			echo '<div class="form-field form-required term-name-wrap">' . PHP_EOL;
 			echo '<label for="name">Namn</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="name" name="name">' . PHP_EOL, htmlentities($rent_object['name']));
-			echo '<p>Namnet på stugan/anläggningen/platsen.</p>' . PHP_EOL;
+			echo '<p>Namn på anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// Organistation
@@ -348,7 +348,7 @@ class rent_object_holder
 			}
 			echo '</select>' . PHP_EOL;
 // 			$rent_object['rent_organisation_id'], htmlentities($rent_object['organisation_name'] ?: 'Organistation ' . $rent_object['rent_organisation_id']));
-			echo '<p>Organistation som har stugan/anläggningen/platsen.</p>' . PHP_EOL;
+			echo '<p>Organistation som förvaltar anläggningen</p>' . PHP_EOL;
 			echo '<p><b>TODO</b>: Add a new</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
@@ -363,14 +363,14 @@ class rent_object_holder
 				echo '<option value="' . htmlentities($row['rent_object_type_id']) . '"' . ($row['rent_object_type_id'] == $rent_object['rent_object_type_id'] ? ' selected="selected"': '') . '>' . htmlentities($row['type_name']) . '</option>' . PHP_EOL;
 			}
 			echo '</select>' . PHP_EOL;
-			echo '<p>Typ av anläggning.</p>' . PHP_EOL;
+			echo '<p>Typ av anläggning</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// city
 			echo '<div class="form-field form-required">' . PHP_EOL;
 			echo '<label for="city">Stad</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="city" name="city">' . PHP_EOL, htmlentities($rent_object['city']));
-			echo '<p>Stad/ort där anläggning finns.</p>' . PHP_EOL;
+			echo '<p>Stad/ort där anläggningen finns</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// ingress
@@ -379,7 +379,7 @@ class rent_object_holder
 			echo '<textarea id="ingress" name="ingress">' . PHP_EOL;
 			echo htmlentities($rent_object['ingress']) . PHP_EOL;
 			echo '</textarea>' . PHP_EOL;
-			echo '<p>Kort beskrivning av anlägningen.</p>' . PHP_EOL;
+			echo '<p>Kort beskrivning av anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// description
@@ -388,23 +388,23 @@ class rent_object_holder
 			echo '<textarea id="description" name="description">' . PHP_EOL;
 			echo htmlentities($rent_object['description']) . PHP_EOL;
 			echo '</textarea>' . PHP_EOL;
-			echo '<p>Lång beskrivning som visas efter Ingressen.</p>' . PHP_EOL;
+			echo '<p>Lång beskrivning som visas efter ingressen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// price_description
 			echo '<div class="form-field">' . PHP_EOL;
-			echo '<label for="price_description">Prismodel</label>' . PHP_EOL;
+			echo '<label for="price_description">Prisuppgifter</label>' . PHP_EOL;
 			echo '<textarea id="price_description" name="price_description">' . PHP_EOL;
 			echo htmlentities($rent_object['price_description']) . PHP_EOL;
 			echo '</textarea>' . PHP_EOL;
-			echo '<p>Beskrivning hur prissättningen är.</p>' . PHP_EOL;
+			echo '<p>Beskrivning av prissättning</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// url
 			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="url">URL</label>' . PHP_EOL;
+			echo '<label for="url">Hemsida</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="url" name="url">' . PHP_EOL, htmlentities($rent_object['url']));
-			echo '<p>Webaddress till aktuell information om anläggningen.</p>' . PHP_EOL;
+			echo '<p>Hemsideadress för aktuell information om anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// visit_adress
@@ -413,7 +413,7 @@ class rent_object_holder
 			echo '<textarea id="visit_adress" name="visit_adress">' . PHP_EOL;
 			echo htmlentities($rent_object['visit_adress']) . PHP_EOL;
 			echo '</textarea>' . PHP_EOL;
-			echo '<p>Address till anläggning.</p>' . PHP_EOL;
+			echo '<p>Adress till anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// post_adress
@@ -422,16 +422,16 @@ class rent_object_holder
 			echo '<textarea id="post_adress" name="post_adress">' . PHP_EOL;
 			echo htmlentities($rent_object['post_adress']) . PHP_EOL;
 			echo '</textarea>' . PHP_EOL;
-			echo '<p>Adress till postmotagare för anläggningen.</p>' . PHP_EOL;
+			echo '<p>Adress till postmottagare för anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// position_latitude
 			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="position_latitude">Position</label>' . PHP_EOL;
+			echo '<label for="position_latitude">Koordinater</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="position_latitude" name="position_latitude">' . PHP_EOL, htmlentities($rent_object['position_latitude']));
 			// position_longitude
 			printf('<input type="text" aria-required="true" value="%s" id="position_longitude" name="position_longitude">' . PHP_EOL, htmlentities($rent_object['position_longitude']));
-			echo '<p>Var ska anlägningen synas på kartvyn.</p>' . PHP_EOL;
+			echo '<p>Ange koordinater för markering i registrets kartvy, exempelvis 59.3049553 17.9821006</p>' . PHP_EOL;
 			echo '<p><b>TODO</b>: Select by adress or map, using google-map-api</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
@@ -446,23 +446,23 @@ class rent_object_holder
 
 			// contact_phone
 			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="contact_phone">Kontaktperson - Telefon</label>' . PHP_EOL;
+			echo '<label for="contact_phone">Kontaktperson - telefon</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="contact_phone" name="contact_phone">' . PHP_EOL, htmlentities($rent_object['contact_phone']));
-			echo '<p>Telefonnummer till kontaktperson, tex för bokning av anläggningen.</p>' . PHP_EOL;
+			echo '<p>Telefonnummer till kontaktperson, för exempelvis bokning av anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// contact_email
 			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="contact_email">Kontaktperson - E-post</label>' . PHP_EOL;
+			echo '<label for="contact_email">Kontaktperson - e-post</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="contact_email" name="contact_email">' . PHP_EOL, htmlentities($rent_object['contact_email']));
-			echo '<p>E-post-adress till kontaktperson, tex för bokning av anläggningen..</p>' . PHP_EOL;
+			echo '<p>E-post till kontaktperson, för exempelvis bokning av anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			// contact_other
 			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="contact_other">Kontakt - Information</label>' . PHP_EOL;
+			echo '<label for="contact_other">Kontakt - information</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="contact_other" name="contact_other">' . PHP_EOL, htmlentities($rent_object['contact_other']));
-			echo '<p>Mer info om kontakt, tex länk till bokningssida.</p>' . PHP_EOL;
+			echo '<p>Mer info om kontaktmöjligheter, exempelvis länk till bokningssida</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			echo "<h3>Sökbara parametrar</h3>";
@@ -471,7 +471,7 @@ class rent_object_holder
 			echo '<div class="form-field form-required">' . PHP_EOL;
 			echo '<label for="beds">Sovplatser</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="beds" name="beds">' . PHP_EOL, htmlentities($rent_object['beds']));
-			echo '<p>Antal sovplatser på anläggningen.</p>' . PHP_EOL;
+			echo '<p>Antal sovplatser på anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			$setting_names = $this->object_settings_names();
@@ -518,8 +518,8 @@ JS_BLOCK;
 			}
 			echo '<input type="hidden" id="new_images" name="new_images" value="" />';
 
-			echo "<h3>Sökbara Prissenarion</h3>";
-			echo "<p>Här ges exemple på grupper som skulle vilja hyra eran anläggning, ange totalpriset denna grupp skulle få betala för angiven tidsperiod.</p>";
+			echo "<h3>Sökbara prisscenarier</h3>";
+			echo "<p>Nedan ges olika tänkbara grupper som skulle kunna hyra anläggningen. Ange totalpriset som dessa grupper skulle få betala för angiven tidsperiod</p>";
 
 			$price_scenarios = $this->price_scenarios($id);
 			foreach($price_scenarios as $price_scenario)
@@ -540,13 +540,13 @@ JS_BLOCK;
 			{
 				submit_button("Spara", 'primary', 'save', FALSE);
 				echo ' ';
-				submit_button("Avpublisera", 'secondary', 'unpublish', FALSE);
+				submit_button("Avpublicera", 'secondary', 'unpublish', FALSE);
 			}
 			else
 			{
 				submit_button("Spara", 'secondary', 'save', FALSE);
 				echo ' ';
-				submit_button("Publisera", 'primary', 'publish', FALSE);
+				submit_button("Publicera", 'primary', 'publish', FALSE);
 			}
 			echo '</p>' . PHP_EOL;
 

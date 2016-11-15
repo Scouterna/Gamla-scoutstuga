@@ -2495,7 +2495,7 @@ $GLOBALS['debug_query'] = $query;
 
 	function column_name($item)
 	{
-		return sprintf('<a href="?page=rent_objects&amp;id=%d">%s</a>', $item['rent_object_id'], htmlentities($item['name']));
+		return sprintf('<a href="?page=rent_objects&amp;id=%d">%s</a>', $item['rent_object_id'], $item['name'] ? htmlentities($item['name']) : "(namnlöss)");
 	}
 
 	function column_default($item, $column_name)

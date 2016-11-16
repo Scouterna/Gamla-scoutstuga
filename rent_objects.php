@@ -1970,12 +1970,12 @@ SQL_BLOCK;
 		$html[] = '<div class="rent_object" id="rent_object_' . ((int) $rent_object->rent_object_id) . '">';
 		$object_name = htmlentities($rent_object->name);
 		$html[] = '<h2 class="rent_object_name">' . $object_name . '</h2>';
-		$html[] = '<p class="ingress rent_object_ingress">' . htmlentities($rent_object->ingress) . '</p>';
+		$html[] = '<p class="ingress rent_object_ingress">' . nl2br(htmlentities($rent_object->ingress)) . '</p>';
 		if($rent_object->main_image)
 		{
 			$html[] = '<p class="rent_object_main_image rent_object_image">' . wp_get_attachment_image((int) $rent_object->main_image, 'large') . '</p>';
 		}
-		$html[] = '<p class="description rent_object_description">' . make_clickable(htmlentities($rent_object->description)) . '</p>';
+		$html[] = '<p class="description rent_object_description">' . make_clickable(nl2br(htmlentities($rent_object->description))) . '</p>';
 		$url = htmlentities($rent_object->url);
 		$html[] = '<p class="rent_object_link"><a class="rent_object_link" target="_bland" href="' . $url . '">' . $url . '</a></p>';
 

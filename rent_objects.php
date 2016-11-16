@@ -2015,11 +2015,22 @@ SQL_BLOCK;
 		$html[] = '<h3 class="rent_object_contact">Kontaktuppgifter</h3>';
 		$html[] = '<dl class="rent_object_contact">';
 		$contact_name = htmlentities($rent_object->contact_name);
-		$contact_email = htmlentities($rent_object->contact_email);
-		$contact_phone = htmlentities($rent_object->contact_phone);
 		$html[] = "<dt>Kontaktperson:</dt>	<dd>{$contact_name}</dd>";
-		$html[] = "<dt>E-post:</dt>	<dd><a href=\"mailto:{$contact_name} <{$contact_email}>?subject={$object_name}\">{$contact_email}</a></dd>";
-		$html[] = "<dt>Telefon:</dt>	<dd><a href=\"tel:{$contact_phone}\">{$contact_phone}</a></dd>";
+
+		$contact_emails = array();
+		foreach(array_map('htmlentities', array_map('trim', explode(",", $rent_object->contact_email))) as $current_email)
+		{
+			$contact_emails[] = "<a href=\"mailto:{$contact_name} <{$current_email}>?subject={$object_name}\">{$current_email}</a>";
+		}
+		$html[] = "<dt>E-post:</dt>	<dd>" . implode(', ', $contact_emails) . "</dd>";
+
+		$contact_phone = htmlentities($rent_object->contact_phone);
+		$contact_phones = array();
+		foreach(array_map('htmlentities', array_map('trim', explode(",", $rent_object->contact_phone))) as $current_phone)
+		{
+			$contact_phones[] = "<a href=\"tel:{$current_phone}\">{$current_phone}</a>";
+		}
+		$html[] = "<dt>Telefon:</dt>	<dd>" . implode(", ", $contact_phones) . "</dd>";
 		$html[] = '<dt>Övrigt:</dt>	<dd>' . make_clickable(htmlentities($rent_object->contact_other)) . '</dd>';
 		$html[] = '</dl>';
 

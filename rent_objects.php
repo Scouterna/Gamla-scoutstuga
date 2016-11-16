@@ -1904,7 +1904,7 @@ HTML_BLOCK;
 			</select>
 		</label><br />
 		<label>
-			<span>Anläggnings name:</span><br />
+			<span>Anläggningsnamn:</span><br />
 			<input name="add_rent_object[name]" type="name" />
 		</label><br />
 		<label>
@@ -1912,7 +1912,7 @@ HTML_BLOCK;
 			<input name="add_rent_object[organisation]" type="name" />
 		</label><br />
 		<label>
-			<span>E-post-adress för konto:</span><br />
+			<span>E-post för konto:</span><br />
 			<input name="add_rent_object[email]" type="name" value="{$email_html}" />
 		</label><br />
 		<label>
@@ -2508,7 +2508,7 @@ $GLOBALS['debug_query'] = $query;
 			}
 			case 1:
 			{
-				return "Publiserad";
+				return "Publicerad";
 			}
 			case -1:
 			{

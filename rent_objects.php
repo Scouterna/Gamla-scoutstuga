@@ -2251,7 +2251,7 @@ SQL_BLOCK;
 			if(isset($types_indexed[$items[$row['rent_object_id']]['rent_object_type_id']]['price_scenario_id']) AND $row['price_scenario_id'] == $types_indexed[$items[$row['rent_object_id']]['rent_object_type_id']]['price_scenario_id'])
 			{
 				$items[$row['rent_object_id']]['senario_price'] = $row['price'];
-				$items[$row['rent_object_id']]['senario_pppd'] = $row['pppd'];
+				$items[$row['rent_object_id']]['senario_pppd'] = round($row['pppd'], 2);
 				$items[$row['rent_object_id']]['senario_price_name'] = $row['price_scenario_name'];
 			}
 		}

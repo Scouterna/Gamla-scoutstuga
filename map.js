@@ -24,17 +24,22 @@ function init_map() {
 console.log("inside init_map");
 	var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
 
-	var map;
-	var bounds = new google.maps.LatLngBounds();
+	map_wrapper.map_bounds = new google.maps.LatLngBounds();
 	var mapOptions = {
 		mapTypeId: 'roadmap'
 	};
 
 	// Display a map on the page
-	map = new google.maps.Map(map_wrapper.firstChild, mapOptions);
-	map.setTilt(45);
+	map_wrapper.map = new google.maps.Map(map_wrapper.firstChild, mapOptions);
+	map_wrapper.map.setTilt(45);
 
-	if(map_wrapper.getAttribute('data-markers'))
+	var markers_count = 0;
+
+	if(map_wrapper.map_callback)
+	{
+		map_wrapper.map_callback();
+	}
+	else if(map_wrapper.getAttribute('data-markers'))
 	{
 		// TODO
 		// https://wrightshq.com/playground/placing-multiple-markers-on-a-google-map-using-api-3/
@@ -46,13 +51,24 @@ console.log("inside init_map");
 		var pos_lat = map_wrapper.getAttribute('data-lat');
 		var pos_long = map_wrapper.getAttribute('data-long');
 		var position = new google.maps.LatLng(pos_lat, pos_long);
+		var icon = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+		if(map_wrapper.getAttribute('data-type'))
+		{
+			var type = map_wrapper.getAttribute('data-type');
+			if(type == '2')
+			{
+				icon = 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+			}
+		}
 
-		bounds.extend(position);
+		map_wrapper.map_bounds.extend(position);
 		marker = new google.maps.Marker({
-			map: map,
+			map: map_wrapper.map,
 			title: name,
 			position: position,
+			icon: icon
 		});
+		markers_count++;
 	}
 	else if(map_wrapper.getAttribute('data-address'))
 	{
@@ -71,23 +87,27 @@ console.log("inside init_map");
 		var geocoder = new google.maps.Geocoder();
 		geocoder.geocode({'address': address}, function(results, status) {
 			if (status == google.maps.GeocoderStatus.OK) {
-				map.setCenter(results[0].geometry.location);
+				map_wrapper.map.setCenter(results[0].geometry.location);
 				var marker = new google.maps.Marker({
-					map: map,
+					map: map_wrapper.map,
 					title: name,
 					position: results[0].geometry.location,
 					icon: icon
 				});
 			}
 		});
+		markers_count++;
 	}
 
 	// Automatically center the map fitting all markers on the screen
-	map.fitBounds(bounds);
+	if(markers_count)
+	{
+		map_wrapper.map.fitBounds(map_wrapper.map_bounds);
 
-	// Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
-	var boundsListener = google.maps.event.addListener((map), 'bounds_changed', function(event) {
-		this.setZoom(12);
-		google.maps.event.removeListener(boundsListener);
-	});
+		// Override our map zoom level once our fitBounds function runs (Make sure it only runs once)
+		var boundsListener = google.maps.event.addListener(map_wrapper.map, 'bounds_changed', function(event) {
+			this.setZoom(12);
+			google.maps.event.removeListener(boundsListener);
+		});
+	}
 }

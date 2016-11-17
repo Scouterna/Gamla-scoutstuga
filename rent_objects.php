@@ -830,7 +830,7 @@ HTML_BLOCK;
 
 	function display_map()
 	{
-		return "[TODO Map]";
+		return "<div class=\"map_wrapper\"><div class=\"map_canvas mapping\"></div></div>";
 	}
 
 	function display_reg_form()

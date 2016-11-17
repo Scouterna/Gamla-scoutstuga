@@ -208,6 +208,11 @@ window.rent_objects.filter = function()
 		if(ok)
 		{
 			active_objects.push(object);
+			object.visible = true;
+		}
+		else
+		{
+			object.visible = false;
 		}
 	}
 
@@ -346,8 +351,65 @@ window.rent_objects.update_list = function()
 
 window.rent_objects.update_map = function()
 {
-	// TODO
-	// ...
+	var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
+	if(!map_wrapper) return false;
+	if(!map_wrapper.map) return false;
+	if(!map_wrapper.map_bounds) return false;
+
+	var added = 0;
+	var objects = window.rent_objects.objects;
+	var objects_count = objects.length;
+	for(var oi = 0; oi < objects_count; oi++)
+	{
+		var object = objects[oi];
+		if(object.map_marker)
+		{
+			object.map_marker.setVisible(object.visible);
+		}
+		else
+		{
+			if(object.position_latitude)
+			{
+				var icon = 'https://maps.google.com/mapfiles/ms/icons/green-dot.png';
+				if(object.rent_object_type_id == 2)
+				{
+					icon = 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png';
+				}
+				var position = new google.maps.LatLng(object.position_latitude, object.position_longitude);
+
+				object.map_marker = new google.maps.Marker({
+					map: map_wrapper.map,
+					title: object.name,
+					position: position,
+					icon: icon
+				});
+				object.map_marker.reference = object;
+				var rows = [
+					'<a href="' + object.url + '">' + object.name + '</a>',
+					object.city,
+				];
+				object.infowindow = new google.maps.InfoWindow({content: rows.join("<br />\n")});
+
+				object.map_marker.addListener('click', function() {
+					if(window.rent_objects.map_open_info_window)
+					{
+						window.rent_objects.map_open_info_window.close();
+
+					}
+					window.rent_objects.map_open_info_window = this.reference.infowindow;
+					this.reference.infowindow.open(this.map, this);
+				});
+
+				map_wrapper.map_bounds.extend(position);
+				added++;
+			}
+		}
+	}
+
+	if(added)
+	{
+		map_wrapper.map.fitBounds(map_wrapper.map_bounds);
+	}
 };
 
 window.rent_objects.render_filters = function()
@@ -1048,6 +1110,12 @@ window.rent_objects.init = function()
 	}
 	window.rent_objects.filter();
 	window.rent_objects.add_listners();
+
+	var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
+	if(map_wrapper)
+	{
+		map_wrapper.map_callback = window.rent_objects.update_map;
+	}
 };
 
 window.rent_objects.add_listners = function()

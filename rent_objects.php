@@ -411,13 +411,6 @@ class rent_object_holder
 			echo '<p>Beskrivning av prissättning</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
-			// url
-			echo '<div class="form-field form-required">' . PHP_EOL;
-			echo '<label for="url">Hemsida</label>' . PHP_EOL;
-			printf('<input type="text" aria-required="true" value="%s" id="url" name="url">' . PHP_EOL, htmlentities($rent_object['url']));
-			echo '<p>Hemsideadress för aktuell information om anläggningen</p>' . PHP_EOL;
-			echo '</div>' . PHP_EOL;
-
 			// visit_adress
 			echo '<div class="form-field">' . PHP_EOL;
 			echo '<label for="visit_adress">Besöksadress</label>' . PHP_EOL;
@@ -469,11 +462,18 @@ class rent_object_holder
 			echo '<p>E-post till kontaktperson, för exempelvis bokning av anläggningen</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
+			// url
+			echo '<div class="form-field form-required">' . PHP_EOL;
+			echo '<label for="url">Hemsida</label>' . PHP_EOL;
+			printf('<input type="text" aria-required="true" value="%s" id="url" name="url">' . PHP_EOL, htmlentities($rent_object['url']));
+			echo '<p>Hemsideadress för aktuell information om anläggningen</p>' . PHP_EOL;
+			echo '</div>' . PHP_EOL;
+
 			// contact_other
 			echo '<div class="form-field form-required">' . PHP_EOL;
 			echo '<label for="contact_other">Kontakt - information</label>' . PHP_EOL;
 			printf('<input type="text" aria-required="true" value="%s" id="contact_other" name="contact_other">' . PHP_EOL, htmlentities($rent_object['contact_other']));
-			echo '<p>Mer info om kontaktmöjligheter, exempelvis länk till bokningssida</p>' . PHP_EOL;
+			echo '<p>Övrig information du vill ge till gäster, exempelvis telefontider.</p>' . PHP_EOL;
 			echo '</div>' . PHP_EOL;
 
 			echo "<h3>Sökbara parametrar</h3>";
@@ -983,7 +983,11 @@ SQL_BLOCK;
 			$contact_phones[] = "<a href=\"tel:{$current_phone}\">{$current_phone}</a>";
 		}
 		$html[] = "<dt>Telefon:</dt>	<dd>" . implode(", ", $contact_phones) . "</dd>";
-		$html[] = '<dt>Övrigt:</dt>	<dd>' . make_clickable(htmlentities($rent_object->contact_other)) . '</dd>';
+		$html[] = '<dt>Hemsida:</dt><dd class="rent_object_link"><a class="rent_object_link" target="_bland" href="' . $url . '">' . $url . '</a></dd>';
+		if($rent_object->contact_other)
+		{
+			$html[] = '<dt>Övrigt:</dt>	<dd>' . make_clickable(htmlentities($rent_object->contact_other)) . '</dd>';
+		}
 		$html[] = '</dl>';
 
 		$html[] = '<h3 class="rent_object_images">Bilder</h3>';

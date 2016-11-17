@@ -1114,7 +1114,8 @@ window.rent_objects.init = function()
 	var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
 	if(map_wrapper)
 	{
-		map_wrapper.map_callback = window.rent_objects.update_map;
+		// run filter, that sets visibility, and then runs update_map()
+		map_wrapper.map_callback = window.rent_objects.filter;
 	}
 };
 

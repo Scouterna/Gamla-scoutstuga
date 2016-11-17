@@ -25,6 +25,10 @@ window.rent_objects.fetch_item_by_id = function(list, id_field, id_value, select
 window.rent_objects.filter = function()
 {
 	var objects = window.rent_objects.objects;
+	if(!objects)
+	{
+		return;
+	}
 	var objects_length = objects.length;
 	var active_objects = [];
 	var filters = window.rent_objects.filters;
@@ -1111,11 +1115,14 @@ window.rent_objects.init = function()
 	window.rent_objects.filter();
 	window.rent_objects.add_listners();
 
-	var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
-	if(map_wrapper)
+	if(window.rent_objects.objects)
 	{
-		// run filter, that sets visibility, and then runs update_map()
-		map_wrapper.map_callback = window.rent_objects.filter;
+		var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
+		if(map_wrapper)
+		{
+			// run filter, that sets visibility, and then runs update_map()
+			map_wrapper.map_callback = window.rent_objects.filter;
+		}
 	}
 };
 

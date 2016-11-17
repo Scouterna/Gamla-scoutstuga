@@ -1,6 +1,6 @@
 (function() {
 	var init = function() {
-		var map = document.getElementsByClassName('map_wrapper');
+		var map = document.getElementsByClassName('map_wrapper')[0];
 		if(map)
 		{
 			// Asynchronously Load the map API

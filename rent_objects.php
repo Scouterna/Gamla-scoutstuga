@@ -525,7 +525,7 @@ JS_BLOCK;
 
 			foreach($wpdb->get_col("SELECT image_id FROM {$wpdb->prefix}rent_object_images WHERE rent_object_id = {$id} ORDER BY pos, image_id", 0) AS $image_id)
 			{
-				echo wp_get_attachment_image($image_id, 'thumbnail');
+				echo wp_get_attachment_image($image_id, 'thumbnail', NULL, array('data-id' => $image_id));
 			}
 			echo '<input type="hidden" id="new_images" name="new_images" value="" />';
 
@@ -992,10 +992,38 @@ SQL_BLOCK;
 
 		$html[] = '<h3 class="rent_object_images">Bilder</h3>';
 		$html[] = '<p class="rent_object_image">';
+		$last_portrait = 100;
 		foreach($wpdb->get_col("SELECT image_id FROM {$wpdb->prefix}rent_object_images WHERE rent_object_id = " . (int) $rent_object->rent_object_id . " ORDER BY pos, image_id", 0) AS $image_id)
 		{
-			$html[] = wp_get_attachment_image($image_id, 'large');
+			$attributes = array();
+			$meta = wp_get_attachment_metadata($image_id);
+			// portrait
+			if($meta['width'] * 1.35 < $meta['height'])
+			{
+				$attributes['style'] = "float: left; margin-right: 3px;";
+				if($last_portrait == 2)
+				{
+					$attributes['style'] .= " clear: both;";
+				}
+				$last_portrait = 0;
+				$html[] = "<!-- portrait: {$meta['width']} x {$meta['height']} [{$image_id}, {$last_portrait}]-->";
+			}
+			else
+			{
+				$last_portrait++;
+				$html[] = "<!-- landscape: {$meta['width']} x {$meta['height']} [{$image_id}, {$last_portrait}]-->";
+				if($last_portrait == 3)
+				{
+					$html[] = "<br style=\"clear: both;\" />";
+				}
+			}
+			$html[] = wp_get_attachment_image($image_id, 'large', FALSE, $attributes);
 		}
+		if($last_portrait < 3)
+		{
+			$html[] = "<br style=\"clear: both;\" />";
+		}
+		else $html[] =  $last_portrait;
 		$html[] = '</p>';
 
 		$html[] = '<p class="rent_object_footer">' . htmlentities("Updated {$rent_object->object_updated} by {$rent_object->user_name}, Löpnummer: {$rent_object->rent_object_id}") . '</p>';

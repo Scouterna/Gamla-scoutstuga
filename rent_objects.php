@@ -1308,7 +1308,7 @@ SQL_BLOCK;
 			return FALSE;
 		}
 
-		$direct_access = $wpdb->get_var("SELECT 1 FROM {$wpdb->prefix}rent_object_permissions WHERE user_id = {$user_id} AND rent_object_id = {$rent_object_id}");
+		$direct_access = $wpdb->get_var("SELECT 1 AS ok FROM {$wpdb->prefix}rent_object_permissions WHERE user_id = {$user_id} AND rent_object_id = {$rent_object_id}");
 
 		if($direct_access)
 		{

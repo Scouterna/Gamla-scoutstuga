@@ -244,6 +244,11 @@ class rent_object_holder
 						);
 					}
 				}
+				// force timestamp update
+				if(!$rent_object_updates)
+				{
+					$rent_object_updates['object_updated'] = NULL;
+				}
 			}
 
 			if($allowed AND $price_updates)
@@ -260,6 +265,11 @@ class rent_object_holder
 						),
 						array('%d', '%d', '%d', '%d')
 					);
+				}
+				// force timestamp update
+				if(!$rent_object_updates)
+				{
+					$rent_object_updates['object_updated'] = NULL;
 				}
 			}
 
@@ -279,6 +289,11 @@ class rent_object_holder
 							array('%d', '%d')
 						);
 					}
+				}
+				// force timestamp update
+				if(!$rent_object_updates)
+				{
+					$rent_object_updates['object_updated'] = NULL;
 				}
 			}
 

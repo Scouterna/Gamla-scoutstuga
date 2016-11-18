@@ -17,6 +17,7 @@ DEFINE("RENT_OBJECT_PLUGIN_VERSION",'0.0.1');
 DEFINE("RENT_OBJECT_USER_CAP", "edit_posts");
 DEFINE("RENT_OBJECT_ADMIN_CAP", "edit_others_posts");
 
+add_action('plugins_loaded', array("rent_object_holder", 'db_check'));	
 add_action("admin_menu", array("rent_object_holder", "init_admin"));
 add_action("wp", array("rent_object_holder", "init_wp"));
 add_action('admin_post_nopriv_add_rent_object', array("rent_object_holder", 'add_new_user') );
@@ -1382,6 +1383,19 @@ UNION
 SQL_BLOCK;
 
 		return $wpdb->get_col($query);
+	}
+	
+	function db_check()
+	{
+		$sql_file = __DIR__ . '/rent_objects.sql';
+		// TODO on release, replace with static MD5-string
+		$db_md5 = md5_file($sql_file);
+		if(get_site_option('rent_object_db_md5') != $db_md5)
+		{
+			require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+			dbDelta(str_replace('CREATE TABLE IF NOT EXISTS `wp_', 'CREATE TABLE `' . $wpdb->prefix, file_get_contents($sql_file)));
+			update_option('rent_object_db_md5', $db_md5);
+		}
 	}
 }
 

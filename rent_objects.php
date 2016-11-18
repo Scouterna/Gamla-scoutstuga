@@ -1083,7 +1083,7 @@ SQL_BLOCK;
 				else
 				{
 					// create a user
-					$user = wp_insert_user(array('user_login' => $add_data['email'], 'user_pass' => $add_data['password'], 'user_email' => $add_data['email']));
+					$user = wp_insert_user(array('role' => 'contributor', 'user_login' => $add_data['email'], 'user_pass' => $add_data['password'], 'user_email' => $add_data['email']));
 					if(is_wp_error($user))
 					{
 						return $user;

@@ -1024,7 +1024,6 @@ SQL_BLOCK;
 		{
 			$html[] = "<br style=\"clear: both;\" />";
 		}
-		else $html[] =  $last_portrait;
 		$html[] = '</p>';
 
 		$html[] = '<p class="rent_object_footer">' . htmlentities("Updated {$rent_object->object_updated} by {$rent_object->user_name}, Löpnummer: {$rent_object->rent_object_id}") . '</p>';

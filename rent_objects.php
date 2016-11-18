@@ -1399,7 +1399,7 @@ SQL_BLOCK;
 		return $wpdb->get_col($query);
 	}
 	
-	function db_check()
+	static function db_check()
 	{
 		$sql_file = __DIR__ . '/rent_objects.sql';
 		// TODO on release, replace with static MD5-string

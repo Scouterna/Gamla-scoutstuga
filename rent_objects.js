@@ -276,7 +276,38 @@ window.rent_objects.filter = function()
 	}
 
 	// TODO sort
-
+window.rent_objects.sortorder = 'distance';
+	if(window.rent_objects.sortorder)
+	{
+		switch(window.rent_objects.sortorder)
+		{
+			case 'distance':
+			{
+				active_objects.sort(
+					function (a, b)
+					{
+						if(a.distance)
+						{
+							if(b.distance)
+							{
+								return a.distance - b.distance;
+							}
+							else
+							{
+								return -1;
+							}
+						}
+						else if(b.distance)
+						{
+							return 1;
+						}
+						return 0;
+					}
+				);
+				break;
+			}
+		}
+	}
 	window.rent_objects.active_objects = active_objects;
 	window.rent_objects.render_filters();
 	window.rent_objects.update_list();

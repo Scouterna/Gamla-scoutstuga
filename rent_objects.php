@@ -827,10 +827,10 @@ HTML_BLOCK;
 	<thead>
 		<tr>
 			<th>Anläggning</th>
+			<th>Organisation</th>
 			<th>Typ</th>
 			<th>Ort</th>
-			<th>Organisation</th>
-			<!-- th>Avstånd</th -->
+			<th>Avstånd</th>
 			<th>Sovplatser</th>
 			<th>Pris</th>
 		</tr>

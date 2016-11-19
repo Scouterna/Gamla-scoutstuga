@@ -317,6 +317,11 @@ window.rent_objects.update_list = function()
 			td.appendChild(a);
 			tr.appendChild(td);
 
+			// Organisation
+			var td = document.createElement('td');
+			td.innerText = window.rent_objects.fetch_item_by_id(org, 'id', object.rent_organisation_id, 'name');
+			tr.appendChild(td);
+
 			// Type
 			var td = document.createElement('td');
 			td.innerText = window.rent_objects.fetch_item_by_id(types, 'id', object.rent_object_type_id, 'name');
@@ -327,9 +332,27 @@ window.rent_objects.update_list = function()
 			td.innerText = object.city;
 			tr.appendChild(td);
 
-			// Organisation
+			// Distance
 			var td = document.createElement('td');
-			td.innerText = window.rent_objects.fetch_item_by_id(org, 'id', object.rent_organisation_id, 'name');
+			if(object.distance)
+			{
+				if(object.distance < 3000)
+				{
+					td.innerText = object.distance + 'm';
+				}
+				else if(object.distance < 30000)
+				{
+					td.innerText = (Math.round(object.distance /100) / 10) + 'km';
+				}
+				else
+				{
+					td.innerText = (Math.round(object.distance /1000) / 10) + 'mil';
+				}
+			}
+			else
+			{
+				td.innerText = '';
+			}
 			tr.appendChild(td);
 
 			// Beds
@@ -343,20 +366,6 @@ window.rent_objects.update_list = function()
 				td.innerText = '';
 			}
 			tr.appendChild(td);
-
-			/*
-			// Distance
-			var td = document.createElement('td');
-			if(false)
-			{
-				// TODO
-			}
-			else
-			{
-				td.innerText = '';
-			}
-			tr.appendChild(td);
-			*/
 
 			// Price
 			var td = document.createElement('td');

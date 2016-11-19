@@ -295,10 +295,10 @@ window.rent_objects.distance = function(lat1, lng1, lat2, lng2)
 	var R = 6371000;
 	// delta values
 	var dLat = deg2rad(lat2 - lat1);
-	var dLong = deg2rad(lng2 - lng1); 
+	var dLong = deg2rad(lng2 - lng1);
 	// calculate angel(?) between dots
-	var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLong/2) * Math.sin(dLong/2); 
-	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLong/2) * Math.sin(dLong/2);
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 	// multipliy angle in radians with sphare radius
 	var d = R * c; // Distance in km
 	return d;

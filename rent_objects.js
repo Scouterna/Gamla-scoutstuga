@@ -37,8 +37,24 @@ window.rent_objects.filter = function()
 	if(!window.rent_objects.cmp_pos && window.rent_objects.user_pos)
 	{
 		window.rent_objects.cmp_pos = window.rent_objects.user_pos;
+		window.rent_objects.cmp_pos.marker = false;
 	}
-	
+	if(window.rent_objects.cmp_pos)
+	{
+		if(!window.rent_objects.cmp_pos.marker)
+		{
+			var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
+			var position = new google.maps.LatLng(window.rent_objects.cmp_pos.lat, window.rent_objects.cmp_pos.lng);
+
+			window.rent_objects.cmp_pos.marker = new google.maps.Marker({
+				map: map_wrapper.map,
+				title: 'Avstånd från här',
+				position: position,
+				icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+			});
+		}
+	}
+
 	for(var oi = 0; oi < objects_length; oi++)
 	{
 		var ok = true;
@@ -1175,9 +1191,18 @@ window.rent_objects.init = function()
 		{
 			navigator.geolocation.getCurrentPosition(function (position)
 				{
-						window.rent_objects.user_pos = {lat: position.coords.latitude, lng: position.coords.longitude, ts: Date.now()}; 
-						localStorage.setItem('user_pos', JSON.stringify(window.rent_objects.user_pos));
-						window.rent_objects.filter();
+					// todo, check if cmp-pos is user-pos
+					if(true)
+					{
+						if(window.rent_objects.cmp_pos.marker)
+						{
+							window.rent_objects.cmp_pos.marker.setMap(null);
+						}
+						window.rent_objects.cmp_pos = false;
+					}
+					window.rent_objects.user_pos = {lat: position.coords.latitude, lng: position.coords.longitude, ts: Date.now()};
+					localStorage.setItem('user_pos', JSON.stringify(window.rent_objects.user_pos));
+					window.rent_objects.filter();
 				}
 			);
 		}

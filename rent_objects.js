@@ -34,10 +34,19 @@ window.rent_objects.filter = function()
 	var filters = window.rent_objects.filters;
 	var filter_count = filters.length;
 
+	if(!window.rent_objects.cmp_pos && window.rent_objects.user_pos)
+	{
+		window.rent_objects.cmp_pos = window.rent_objects.user_pos;
+	}
+	
 	for(var oi = 0; oi < objects_length; oi++)
 	{
 		var ok = true;
 		var object = objects[oi];
+		if(window.rent_objects.cmp_pos)
+		{
+			object.distance = window.rent_objects.distance(window.rent_objects.cmp_pos.lat, window.rent_objects.cmp_pos.lng, object.position_latitude, object.position_longitude);
+		}
 		for(var fi = 0; fi < filter_count; fi++)
 		{
 			var filter = filters[fi];
@@ -261,7 +270,23 @@ window.rent_objects.filter_text = function(haysatack, needle, method)
 		}
 	}
 }
-
+// Haversine formula for the sphere called earth
+window.rent_objects.distance = function(lat1, lng1, lat2, lng2)
+{
+	// converter
+	var deg2rad = function(deg) {return deg * (Math.PI/180)};
+	// Sphare radius (earth) in meters
+	var R = 6371000;
+	// delta values
+	var dLat = deg2rad(lat2 - lat1);
+	var dLong = deg2rad(lng2 - lng1); 
+	// calculate angel(?) between dots
+	var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLong/2) * Math.sin(dLong/2); 
+	var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+	// multipliy angle in radians with sphare radius
+	var d = R * c; // Distance in km
+	return d;
+}
 window.rent_objects.update_list = function()
 {
 	var objects = window.rent_objects.active_objects;
@@ -1122,6 +1147,30 @@ window.rent_objects.init = function()
 		{
 			// run filter, that sets visibility, and then runs update_map()
 			map_wrapper.map_callback = window.rent_objects.filter;
+		}
+
+		var old_user_pos = localStorage.getItem('user_pos');
+		if(old_user_pos)
+		{
+			window.rent_objects.user_pos = JSON.parse(old_user_pos);
+			if(!window.rent_objects.user_pos)
+			{
+				old_user_pos = false;
+			}
+			else if(window.rent_objects.user_pos.ts < Date.now() - 60*60*1000)
+			{
+				old_user_pos = false;
+			}
+		}
+		if(!old_user_pos)
+		{
+			navigator.geolocation.getCurrentPosition(function (position)
+				{
+						window.rent_objects.user_pos = {lat: position.coords.latitude, lng: position.coords.longitude, ts: Date.now()}; 
+						localStorage.setItem('user_pos', JSON.stringify(window.rent_objects.user_pos));
+						window.rent_objects.filter();
+				}
+			);
 		}
 	}
 };

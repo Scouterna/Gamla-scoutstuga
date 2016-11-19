@@ -34,24 +34,54 @@ window.rent_objects.filter = function()
 	var filters = window.rent_objects.filters;
 	var filter_count = filters.length;
 
-	if(!window.rent_objects.cmp_pos && window.rent_objects.user_pos)
+	if(window.google && google.maps)
 	{
-		window.rent_objects.cmp_pos = window.rent_objects.user_pos;
-		window.rent_objects.cmp_pos.marker = false;
-	}
-	if(window.rent_objects.cmp_pos)
-	{
-		if(!window.rent_objects.cmp_pos.marker)
+		if(!window.rent_objects.cmp_pos)
 		{
-			var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
-			var position = new google.maps.LatLng(window.rent_objects.cmp_pos.lat, window.rent_objects.cmp_pos.lng);
+			if(window.rent_objects.user_pos)
+			{
+				window.rent_objects.cmp_pos = window.rent_objects.user_pos;
+			}
+			else
+			{
+				window.rent_objects.cmp_pos = {lat: 58.519222, lng: 15.0198165};
+			}
+			window.rent_objects.cmp_pos.marker = false;
+			window.rent_objects.cmp_pos.auto = true;
+		}
+		if(window.rent_objects.cmp_pos)
+		{
+			if(!window.rent_objects.cmp_pos.marker)
+			{
+				var map_wrapper = document.getElementsByClassName('map_wrapper')[0];
+				var position = new google.maps.LatLng(window.rent_objects.cmp_pos.lat, window.rent_objects.cmp_pos.lng);
 
-			window.rent_objects.cmp_pos.marker = new google.maps.Marker({
-				map: map_wrapper.map,
-				title: 'Avstånd från här',
-				position: position,
-				icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
-			});
+				window.rent_objects.cmp_pos.marker = new google.maps.Marker({
+					map: map_wrapper.map,
+					title: 'Avstånd från här',
+					draggable: true,
+					position: position,
+					icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+				});
+				var cmp_update = function()
+					{
+						var pos = window.rent_objects.cmp_pos.marker.getPosition();
+						window.rent_objects.cmp_pos.lat = pos.lat();
+						window.rent_objects.cmp_pos.lng = pos.lng();
+						window.rent_objects.cmp_pos,auto = false;
+						window.rent_objects.filter();
+					};
+				google.maps.event.addListener(
+					window.rent_objects.cmp_pos.marker,
+					'dragend',
+					cmp_update
+				);
+				google.maps.event.addListener(
+					window.rent_objects.cmp_pos.marker,
+					'drag',
+					cmp_update
+				);
+			}
 		}
 	}
 
@@ -1191,14 +1221,17 @@ window.rent_objects.init = function()
 		{
 			navigator.geolocation.getCurrentPosition(function (position)
 				{
-					// todo, check if cmp-pos is user-pos
-					if(true)
+					if(window.rent_objects.cmp_pos)
 					{
-						if(window.rent_objects.cmp_pos.marker)
+						// todo, check if cmp-pos is user-pos
+						if(window.rent_objects.cmp_pos.auto)
 						{
-							window.rent_objects.cmp_pos.marker.setMap(null);
+							if(window.rent_objects.cmp_pos.marker)
+							{
+								window.rent_objects.cmp_pos.marker.setMap(null);
+							}
+							window.rent_objects.cmp_pos = false;
 						}
-						window.rent_objects.cmp_pos = false;
 					}
 					window.rent_objects.user_pos = {lat: position.coords.latitude, lng: position.coords.longitude, ts: Date.now()};
 					localStorage.setItem('user_pos', JSON.stringify(window.rent_objects.user_pos));

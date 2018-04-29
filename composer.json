@@ -1,0 +1,12 @@
+{
+  "name": "puggan/wp_rent_objects",
+  "description": "Tool for showing rentable objects",
+  "type": "wordpress-plugin",
+  "require": {
+    "composer/installers": "~1.0",
+    "SpiroAB/wp_version_tracker": "~1.0"
+  },
+  "extra": {
+    "installer-name": "rent_objects"
+  }
+}
